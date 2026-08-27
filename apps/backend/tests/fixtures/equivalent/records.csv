@@ -1,0 +1,4 @@
+timestamp,src_ip,dst_ip,src_port,dst_port,txid,input_addresses,output_addresses,input_amounts,output_amounts,fee,script_type,geo_country,asn
+2026-08-28T12:30:00Z,192.0.2.1,198.51.100.2,8333,49152,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,"[""InputAddressA"",""InputAddressB""]","[""OutputAddressA"",""ChangeAddressA""]","[1,0.5]","[1.4,0.09]",0.01, p2wpkh ,in,64512
+2026-08-28T18:05:00+05:30,2001:0db8::1,2001:db8::2,0,65535,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,"[""InputAddressA"",""InputAddressB""]","[""OutputAddressA"",""ChangeAddressA""]","[1,0.5]","[1.4,0.09]",0.01,p2wpkh,IN,64512
+

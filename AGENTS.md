@@ -11,4 +11,6 @@
 - Run the relevant formatter, lint, type, test, and build checks after changes.
 - Never claim a command passed unless it was actually executed successfully.
 - Preserve user work and avoid unrelated refactors or formatting changes.
-
+- Canonical Bitcoin monetary values are integer satoshis; never round binary floating-point input.
+- Canonical data-contract changes must be backward-compatible or explicitly schema-versioned.
+- Never silently discard malformed source records or overwrite a conflicting TXID definition.

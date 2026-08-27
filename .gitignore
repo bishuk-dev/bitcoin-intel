@@ -8,6 +8,7 @@ __pycache__/
 .coverage
 htmlcov/
 *.egg-info/
+/apps/backend/dataset/
 
 # Frontend
 node_modules/

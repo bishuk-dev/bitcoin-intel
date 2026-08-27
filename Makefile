@@ -15,7 +15,7 @@ backend-lint:
 	cd apps/backend && uv run ruff format --check .
 
 backend-typecheck:
-	cd apps/backend && uv run mypy src tests
+	cd apps/backend && uv run mypy src tests scripts
 
 frontend-install:
 	cd apps/frontend && npm ci
@@ -34,4 +34,3 @@ frontend-build:
 	cd apps/frontend && npm run build
 
 verify: backend-lint backend-typecheck backend-test frontend-lint frontend-test frontend-build
-

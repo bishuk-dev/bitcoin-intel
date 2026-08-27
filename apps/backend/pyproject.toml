@@ -5,22 +5,29 @@ description = "FastAPI backend for the SIH 26146 Bitcoin Intelligence Platform"
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
 dependencies = [
+    "defusedxml>=0.7.1,<0.8",
     "fastapi>=0.116,<1",
+    "polars>=1.33,<2",
     "pydantic>=2.11,<3",
     "pydantic-settings>=2.10,<3",
+    "pyarrow>=20,<24",
+    "tzdata>=2025.2,<2027",
     "uvicorn[standard]>=0.35,<1",
 ]
 
 [project.scripts]
+bitcoin-intel = "bitcoin_intel.ingestion.cli:main"
 bitcoin-intel-api = "bitcoin_intel.main:run"
 
 [dependency-groups]
 dev = [
+    "hypothesis>=6.138,<7",
     "httpx2>=2,<3",
     "mypy>=1.17,<2",
     "pytest>=8.4,<9",
     "pytest-cov>=6.2,<8",
     "ruff>=0.12,<1",
+    "types-defusedxml>=0.7.0,<1",
 ]
 
 [build-system]
@@ -46,3 +53,7 @@ python_version = "3.13"
 strict = true
 warn_unreachable = true
 show_error_codes = true
+
+[[tool.mypy.overrides]]
+module = ["pyarrow", "pyarrow.*"]
+ignore_missing_imports = true

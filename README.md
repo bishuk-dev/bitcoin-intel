@@ -5,11 +5,15 @@ The intended product is an offline Linux-based investigative intelligence platfo
 
 ## Current Status
 
-**Phase 0 — Repository Foundation**
+**Phase 1 — Canonical Data Contract and Multi-Format Ingestion**
 
-This repository currently contains a runnable FastAPI health service and a minimal React developer
-landing screen. Transaction ingestion, analytics, graphs, machine learning, risk scoring, alerts, and
-investigation workflows are **not implemented yet**.
+The repository contains the Phase 0 FastAPI health service and React developer screen plus a backend
+CLI that validates CSV, JSON, or XML Bitcoin metadata and writes a deterministic seven-table Parquet
+dataset. The authoritative schemas and source contracts are in
+[`docs/data-contract.md`](docs/data-contract.md).
+
+DuckDB, graph storage, analytics, machine learning, risk scoring, alerts, GeoIP enrichment, API
+uploads, and investigation workflows are **not implemented yet**.
 
 The detailed product constraints remain in `project-context.md` and `instructions.md`.
 
@@ -46,6 +50,18 @@ Expected response:
 {"status":"ok"}
 ```
 
+Ingest a supported source file into a new dataset directory with:
+
+```bash
+cd apps/backend
+uv run bitcoin-intel ingest \
+  --input tests/fixtures/equivalent/records.json \
+  --output ./dataset
+```
+
+The destination must not already exist. The CLI reports read, accepted, rejected, transaction, and
+observation counts; rejected source records remain queryable in the output dataset.
+
 Configuration is loaded from environment variables. Copy `.env.example` into `apps/backend/.env`
 only when local overrides are needed. Never commit `.env`.
 
@@ -69,8 +85,15 @@ Backend:
 cd apps/backend
 uv run ruff check .
 uv run ruff format --check .
-uv run mypy src tests
+uv run mypy src tests scripts
 uv run pytest
+```
+
+An optional non-CI synthetic JSON ingestion sanity check is available with:
+
+```bash
+cd apps/backend
+uv run python scripts/benchmark_ingestion.py --records 10000
 ```
 
 Frontend:
@@ -97,7 +120,7 @@ make verify
 
 ## Running with Docker Compose
 
-After dependency lockfiles are present, build and start both Phase 0 services with:
+After dependency lockfiles are present, build and start both services with:
 
 ```bash
 docker compose up --build
@@ -111,6 +134,7 @@ The backend is available at `http://127.0.0.1:8000/health` and the frontend at
 ```text
 apps/backend/          FastAPI application and backend tests
 apps/frontend/         React application and frontend tests
+docs/data-contract.md  Authoritative Phase 1 source and canonical schemas
 docs/architecture/     Implemented architecture decisions
 infrastructure/docker/ Application Dockerfiles
 ```
