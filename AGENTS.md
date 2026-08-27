@@ -1,0 +1,14 @@
+# Engineering Instructions
+
+- Inspect the repository, tests, configuration, and relevant documentation before changing code.
+- Implement only the requested phase; do not add speculative future modules or placeholder services.
+- Preserve the monorepo architecture and prefer the smallest coherent change.
+- Avoid new dependencies when the standard library or an existing dependency is sufficient.
+- The deployed system must not require cloud services or runtime internet access.
+- Keep Linux/Ubuntu compatibility; use `pathlib` rather than hardcoded path separators in Python.
+- Keep validation and typing strong. Never weaken either silently to make a check pass.
+- Do not leave fake implementations, disconnected abstractions, critical TODOs, or swallowed errors.
+- Run the relevant formatter, lint, type, test, and build checks after changes.
+- Never claim a command passed unless it was actually executed successfully.
+- Preserve user work and avoid unrelated refactors or formatting changes.
+

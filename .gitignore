@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+
+# Frontend
+node_modules/
+dist/
+coverage/
+
+# Environment and local tooling
+.env
+.tools/
+
+# IDE and operating-system noise
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
