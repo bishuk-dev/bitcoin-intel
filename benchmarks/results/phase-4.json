@@ -1,0 +1,66 @@
+{
+  "benchmark_version": "1.0",
+  "configuration": {
+    "canonical_preparation": "generated once per size; excluded from feature measurements",
+    "memory_method": "feature worker process RSS sampled every 20 ms",
+    "record_counts": [
+      10000,
+      100000
+    ],
+    "seed": 42,
+    "temporal_mode": "snapshot"
+  },
+  "environment": {
+    "duckdb_version": "1.5.5",
+    "igraph_version": "1.0.0",
+    "logical_cpu_count": 4,
+    "platform": "Windows-10-10.0.19045-SP0",
+    "processor": "Intel64 Family 6 Model 78 Stepping 3, GenuineIntel",
+    "pyarrow_version": "23.0.1",
+    "python_version": "3.13.9"
+  },
+  "feature_builds": [
+    {
+      "build_seconds": 3.6477198000065982,
+      "canonical_preparation": {
+        "accepted_records": 10000,
+        "excluded_from_feature_timing_and_peak_rss": true,
+        "generated_records": 10000,
+        "reused_existing_canonical_dataset": false,
+        "unique_transactions": 8000
+      },
+      "feature_dataset_id": "39108397954688507d8ea3505fc61d3476443240ee8309abdc9657eed09ce660",
+      "feature_rows_total": 77646,
+      "output_bytes": 2356936,
+      "peak_rss_bytes": 199233536,
+      "record_count": 10000,
+      "table_rows": {
+        "address_features": 32075,
+        "correlation_features": 32075,
+        "ip_features": 5496,
+        "transaction_features": 8000
+      }
+    },
+    {
+      "build_seconds": 23.779968099988764,
+      "canonical_preparation": {
+        "accepted_records": 100000,
+        "excluded_from_feature_timing_and_peak_rss": true,
+        "generated_records": 100000,
+        "reused_existing_canonical_dataset": false,
+        "unique_transactions": 80000
+      },
+      "feature_dataset_id": "e4143a400edd19db4f4f0930519c00b82afcbaf806f5f36fa06efc2b3883a2f1",
+      "feature_rows_total": 766346,
+      "output_bytes": 23471524,
+      "peak_rss_bytes": 805625856,
+      "record_count": 100000,
+      "table_rows": {
+        "address_features": 319938,
+        "correlation_features": 319938,
+        "ip_features": 46470,
+        "transaction_features": 80000
+      }
+    }
+  ]
+}

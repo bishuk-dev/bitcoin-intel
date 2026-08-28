@@ -22,6 +22,7 @@ coverage/
 # Environment and local tooling
 .env
 .tools/
+.uv-cache/
 
 # IDE and operating-system noise
 .idea/

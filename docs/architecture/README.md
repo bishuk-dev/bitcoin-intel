@@ -1,4 +1,4 @@
-# Implemented Architecture Through Phase 3
+# Implemented Architecture Through Phase 4
 
 The repository is a monorepo with independently managed backend and frontend applications:
 
@@ -91,6 +91,30 @@ The product is offline-first. Development dependency resolution and the initial 
 connectivity, but built runtime artifacts do not fetch packages or contact cloud services. The
 Neo4j image can be SHA-256-recorded, saved, transferred, loaded, and run on an internal-only Docker
 network without downloading plugins.
+
+Phase 4 adds a second rebuildable Parquet layer without changing canonical ownership:
+
+```text
+                    Canonical Parquet
+                   /        |        \
+            DuckDB views  Neo4j/GDS  factual graph contract
+                   \        |        /
+                    scoped Feature Engine
+                     /       |       \
+          transaction   address/IP   correlation
+                     \       |       /
+                       Feature Parquet
+```
+
+DuckDB performs independently grouped value, endpoint, temporal, and correlation aggregates.
+igraph runs one ephemeral factual Address–Transaction WCC projection and emits component size, not
+unstable component identity. The feature manifest binds canonical, graph, feature-definition, and
+build-configuration versions. Snapshot and network-observation cutoff builds share the same schemas;
+cutoff mode filters observations and transaction admission before every downstream calculation.
+
+The connected scenario generator is separate from the infrastructure benchmark generator. Its
+evaluation truth sidecar is never passed into canonical ingestion, graph preparation, or features.
+See [`../features.md`](../features.md) and [`../synthetic-scenarios.md`](../synthetic-scenarios.md).
 
 GeoIP enrichment, entity resolution, machine learning, anomaly/risk scoring, alerts, graph HTTP
 endpoints, and dashboard visualization remain future-phase concerns and have no placeholders.

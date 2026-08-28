@@ -8,6 +8,9 @@ from pathlib import Path
 
 from bitcoin_intel.analytics.cli import configure_analytics_parser, run_analytics_command
 from bitcoin_intel.analytics.dataset import AnalyticalDatasetError
+from bitcoin_intel.features.cli import configure_features_parser, run_features_command
+from bitcoin_intel.features.pipeline import FeatureBuildError
+from bitcoin_intel.features.validation import FeatureStoreError
 from bitcoin_intel.graph.cli import configure_graph_parser, run_graph_command
 from bitcoin_intel.graph.connection import GraphConnectionError
 from bitcoin_intel.graph.docker import GraphRebuildError
@@ -26,6 +29,7 @@ def build_parser() -> argparse.ArgumentParser:
     ingest_parser.add_argument("--output", type=Path, required=True, help="new dataset directory")
     configure_analytics_parser(subparsers)
     configure_graph_parser(subparsers)
+    configure_features_parser(subparsers)
     return parser
 
 
@@ -50,6 +54,18 @@ def main(arguments: Sequence[str] | None = None) -> int:
             OSError,
         ) as error:
             print(f"Graph operation failed: {error}", file=sys.stderr)
+            return 1
+    if args.command == "features":
+        try:
+            return run_features_command(args)
+        except (
+            AnalyticalDatasetError,
+            FeatureBuildError,
+            FeatureStoreError,
+            ValueError,
+            OSError,
+        ) as error:
+            print(f"Feature operation failed: {error}", file=sys.stderr)
             return 1
     if args.command != "ingest":
         raise AssertionError("argparse accepted an unknown top-level command")

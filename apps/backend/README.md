@@ -73,6 +73,21 @@ These are fixed, parameterized, bounded operations; there is no arbitrary Cypher
 [`../../docs/deployment/neo4j-offline.md`](../../docs/deployment/neo4j-offline.md) for credentials,
 the destructive rebuild workflow, and air-gapped image transfer.
 
+Phase 4 adds atomic, versioned feature Parquet builds. Snapshot mode uses the complete canonical
+dataset; cutoff mode filters by network observation time and does not claim block time:
+
+```bash
+uv run bitcoin-intel features build --dataset ./dataset --output ./features
+uv run bitcoin-intel features build \
+  --dataset ./dataset --output ./features-at-t --cutoff 2026-01-01T12:00:00Z
+uv run bitcoin-intel features validate --features ./features --dataset ./dataset
+```
+
+Definitions, lineage, nulls, graph projection, and IP/address caveats are documented in
+[`../../docs/features.md`](../../docs/features.md). Generate connected, truth-isolated evaluation
+data with `scripts/generate_scenarios.py`; see
+[`../../docs/synthetic-scenarios.md`](../../docs/synthetic-scenarios.md).
+
 Run the deterministic Phase 2 benchmark manually; it is deliberately excluded from pytest:
 
 ```bash
@@ -93,6 +108,16 @@ uv run python scripts/benchmark_phase3.py \
   --seed 42 \
   --output ../../benchmarks/results/phase-3-local.json \
   --work-directory ../../benchmarks/work/phase3-local
+```
+
+Run the Phase 4 feature benchmark independently of canonical preparation:
+
+```bash
+uv run python scripts/benchmark_phase4.py \
+  --records 10000 100000 \
+  --seed 42 \
+  --output ../../benchmarks/results/phase-4-local.json \
+  --work-directory ../../benchmarks/work/phase4-local
 ```
 
 Verification commands:

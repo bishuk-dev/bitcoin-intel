@@ -5,17 +5,24 @@ The intended product is an offline Linux-based investigative intelligence platfo
 
 ## Current Status
 
-**Phase 3 — Neo4j Factual Graph Foundation and Offline Deployment**
+**Phase 4 — Cross-Layer Correlation and Feature Engineering Foundation**
 
-The repository contains the Phase 0 FastAPI health service and React developer screen, the Phase 1
-canonical ingestion pipeline, local DuckDB analytics, and a derived Neo4j Community graph. Parquet
-remains the durable source of truth; both DuckDB state and Neo4j are rebuildable from it.
+The repository contains the Phase 0 FastAPI health service and React developer screen, Phase 1
+canonical ingestion, local DuckDB analytics, a derived Neo4j Community factual graph, and a
+versioned deterministic Parquet feature layer. Canonical Parquet remains the durable source of
+truth; DuckDB, Neo4j, and feature outputs are rebuildable from it.
 
 The graph preserves transactions, addresses, IP endpoints, and coherent network-observation events
 without claiming addresses are wallets or entities. Its CLI exposes bounded parameterized queries,
 not arbitrary Cypher. See [`docs/graph-model.md`](docs/graph-model.md), the
 [`offline deployment guide`](docs/deployment/neo4j-offline.md), and the
 [`Phase 3 benchmark`](docs/benchmarks/phase-3.md).
+
+Features measure transaction structure, address activity, network observations, temporal behaviour,
+factual bipartite topology, and observational address/IP correlations. Snapshot and UTC
+network-observation cutoff modes, definition-level lineage, atomic publication, validation, and a
+truth-isolated connected scenario generator are documented in [`docs/features.md`](docs/features.md)
+and [`docs/synthetic-scenarios.md`](docs/synthetic-scenarios.md).
 
 Entity resolution, GeoIP enrichment, machine learning, risk scoring, alerts, graph HTTP endpoints,
 and graph visualization are **not implemented yet**.
@@ -98,6 +105,15 @@ uv run bitcoin-intel graph tx --txid <64-hex-txid>
 uv run bitcoin-intel graph gds-verify
 ```
 
+Build and validate deterministic feature Parquet with:
+
+```bash
+uv run bitcoin-intel features build --dataset ./dataset --output ./features
+uv run bitcoin-intel features build \
+  --dataset ./dataset --output ./features-at-t --cutoff 2026-01-01T12:00:00Z
+uv run bitcoin-intel features validate --features ./features --dataset ./dataset
+```
+
 ## Frontend Setup
 
 In a second terminal, from the repository root:
@@ -149,6 +165,16 @@ uv run python scripts/benchmark_phase3.py \
   --work-directory ../../benchmarks/work/phase3-local
 ```
 
+The Phase 4 benchmark measures feature workers independently of canonical preparation:
+
+```bash
+uv run python scripts/benchmark_phase4.py \
+  --records 10000 100000 \
+  --seed 42 \
+  --output ../../benchmarks/results/phase-4-local.json \
+  --work-directory ../../benchmarks/work/phase4-local
+```
+
 Frontend:
 
 ```bash
@@ -193,6 +219,8 @@ apps/frontend/         React application and frontend tests
 docs/data-contract.md  Authoritative Phase 1 source and canonical schemas
 docs/analytics.md      Phase 2 analytical contract and CLI semantics
 docs/graph-model.md    Phase 3 factual graph ontology and integrity rules
+docs/features.md       Phase 4 feature schemas, lineage, time, null, and correlation semantics
+docs/synthetic-scenarios.md  Connected evaluation-data generator and truth separation
 docs/deployment/       Offline Neo4j image and operational workflow
 docs/benchmarks/       Reproducible benchmark reports
 docs/architecture/     Implemented architecture decisions

@@ -21,3 +21,7 @@
 - Parquet remains canonical; Neo4j is derived state that must be fully rebuildable.
 - Never use Neo4j internal node IDs as business or external identifiers.
 - Persist only factual base-graph relationships; inferred relationships belong to later phases.
+- Features are measurements, not guilt, suspiciousness, or risk labels.
+- Never present full-history snapshot features as point-in-time-safe features.
+- Synthetic scenario truth must never enter canonical, graph, or feature inputs.
+- IP/address correlation is observational and never implies ownership or control.
