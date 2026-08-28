@@ -1,4 +1,4 @@
-# Implemented Architecture Through Phase 2
+# Implemented Architecture Through Phase 3
 
 The repository is a monorepo with independently managed backend and frontend applications:
 
@@ -52,6 +52,33 @@ dataset root, registers seven direct-Parquet views, creates the derived `transac
 and closes its in-memory connection at the end of the context. There is no DuckDB server. The
 benchmark-only materialized database is temporary and rebuildable from Parquet.
 
+Phase 3 adds a separately operated factual graph projection:
+
+```text
+                       Canonical Parquet
+                      /                 \
+                     /                   \
+        in-memory DuckDB views       graph-import builder
+                                           ↓
+                                  typed import Parquet
+                                           ↓
+                             Neo4j Community (derived)
+                                           ↓
+                              ephemeral GDS projections
+```
+
+The graph contains only `Transaction`, `Address`, `IPAddress`, and `NetworkObservation` nodes and
+the five factual relationship types defined in [`../graph-model.md`](../graph-model.md). The event
+node preserves source/destination roles, ports, time, TXID, and provenance as one observation.
+`neo4j-admin database import full` replaces the graph only through an explicit confirmation-gated
+CLI command, then creates Community-compatible uniqueness constraints and validates the live graph
+against Parquet. Neo4j internal IDs have no external meaning.
+
+The custom Neo4j image pins Community, GDS, and APOC, copies bundled plugin artifacts during the
+connected build, and retains its plugin/offline configuration when exported with `docker save`.
+Credentials and database state remain runtime configuration and named volumes. Host graph ports are
+loopback-only.
+
 The `transaction_summary` view aggregates inputs, outputs, and observations independently before
 joining them by TXID. This prevents one-to-many relations from multiplying counts and satoshi sums.
 All query values are parameterized; the only dynamic SQL expression is an internal allowlist for
@@ -60,9 +87,10 @@ All query values are parameterized; the only dynamic SQL expression is an intern
 Ubuntu Linux is the production target; Windows with WSL2 is the primary development setup.
 Container and application paths therefore avoid Windows-specific assumptions.
 
-The product is offline-first. Development dependency resolution needs connectivity, but built runtime
-artifacts must not fetch packages or contact cloud services. Packaging Docker images for transfer to an
-air-gapped host is intentionally deferred until the deployment phase.
+The product is offline-first. Development dependency resolution and the initial base-image pull need
+connectivity, but built runtime artifacts do not fetch packages or contact cloud services. The
+Neo4j image can be SHA-256-recorded, saved, transferred, loaded, and run on an internal-only Docker
+network without downloading plugins.
 
-Graph storage, GeoIP enrichment, machine learning, risk scoring, investigation APIs, and dashboard
-workflows remain future-phase concerns and have no placeholder implementations.
+GeoIP enrichment, entity resolution, machine learning, anomaly/risk scoring, alerts, graph HTTP
+endpoints, and dashboard visualization remain future-phase concerns and have no placeholders.

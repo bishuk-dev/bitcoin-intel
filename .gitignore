@@ -11,6 +11,8 @@ htmlcov/
 /apps/backend/dataset/
 /benchmarks/generated/
 /benchmarks/work/
+graph-import*/
+/offline/neo4j/
 
 # Frontend
 node_modules/

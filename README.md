@@ -5,20 +5,20 @@ The intended product is an offline Linux-based investigative intelligence platfo
 
 ## Current Status
 
-**Phase 2 — Embedded DuckDB Analytical Layer**
+**Phase 3 — Neo4j Factual Graph Foundation and Offline Deployment**
 
 The repository contains the Phase 0 FastAPI health service and React developer screen, the Phase 1
-canonical ingestion pipeline, and a local DuckDB analytical layer over the seven-table Parquet
-dataset. Parquet remains the durable source of truth; every analytical session and experimental
-DuckDB materialization is rebuildable from it.
+canonical ingestion pipeline, local DuckDB analytics, and a derived Neo4j Community graph. Parquet
+remains the durable source of truth; both DuckDB state and Neo4j are rebuildable from it.
 
-The analytical CLI provides typed transaction, address, network, temporal, value, fee, and integrity
-operations without exposing arbitrary SQL. See [`docs/analytics.md`](docs/analytics.md) for query
-semantics and [`docs/benchmarks/phase-2.md`](docs/benchmarks/phase-2.md) for measured performance and
-the retained physical-layout decision.
+The graph preserves transactions, addresses, IP endpoints, and coherent network-observation events
+without claiming addresses are wallets or entities. Its CLI exposes bounded parameterized queries,
+not arbitrary Cypher. See [`docs/graph-model.md`](docs/graph-model.md), the
+[`offline deployment guide`](docs/deployment/neo4j-offline.md), and the
+[`Phase 3 benchmark`](docs/benchmarks/phase-3.md).
 
-Graph storage, machine learning, risk scoring, alerts, GeoIP enrichment, API uploads, and
-investigation workflows are **not implemented yet**.
+Entity resolution, GeoIP enrichment, machine learning, risk scoring, alerts, graph HTTP endpoints,
+and graph visualization are **not implemented yet**.
 
 The detailed product constraints remain in `project-context.md` and `instructions.md`.
 
@@ -76,8 +76,27 @@ uv run bitcoin-intel analytics address --dataset ./dataset --address <address>
 uv run bitcoin-intel analytics temporal --dataset ./dataset --bucket day
 ```
 
-Configuration is loaded from environment variables. Copy `.env.example` into `apps/backend/.env`
-only when local overrides are needed. Never commit `.env`.
+Configuration is loaded from environment variables. For local CLI execution, copy `.env.example`
+to `apps/backend/.env`; for Docker Compose, copy it to the repository-root `.env`. Never commit
+either file.
+
+Prepare and validate a derived graph import without running Neo4j:
+
+```bash
+uv run bitcoin-intel graph prepare --dataset ./dataset --output ./graph-import
+uv run bitcoin-intel graph validate-import --input ./graph-import --dataset ./dataset
+```
+
+To import it into the Dockerized database, first set `NEO4J_PASSWORD` in `.env`, then use the
+explicit destructive command described in [`docs/deployment/neo4j-offline.md`](docs/deployment/neo4j-offline.md).
+Runtime checks and foundational queries include:
+
+```bash
+uv run bitcoin-intel graph health
+uv run bitcoin-intel graph validate --dataset ./dataset
+uv run bitcoin-intel graph tx --txid <64-hex-txid>
+uv run bitcoin-intel graph gds-verify
+```
 
 ## Frontend Setup
 
@@ -120,6 +139,16 @@ uv run python scripts/benchmark_phase2.py \
   --output ../../benchmarks/results/phase-2-local.json
 ```
 
+The Phase 3 benchmark is also manual and replaces only its explicitly named isolated test database:
+
+```bash
+uv run python scripts/benchmark_phase3.py \
+  --records 10000 100000 \
+  --seed 42 \
+  --output ../../benchmarks/results/phase-3-local.json \
+  --work-directory ../../benchmarks/work/phase3-local
+```
+
 Frontend:
 
 ```bash
@@ -144,14 +173,17 @@ make verify
 
 ## Running with Docker Compose
 
-After dependency lockfiles are present, build and start both services with:
+After dependency lockfiles are present and a nonblank `NEO4J_PASSWORD` is configured, build and
+start all services with:
 
 ```bash
 docker compose up --build
 ```
 
-The backend is available at `http://127.0.0.1:8000/health` and the frontend at
-`http://127.0.0.1:5173`. Stop them with `docker compose down`.
+The backend is available at `http://127.0.0.1:8000/health`, the frontend at
+`http://127.0.0.1:5173`, Neo4j Browser at `http://127.0.0.1:7474`, and Bolt at
+`neo4j://127.0.0.1:7687`. Stop containers with `docker compose down`; named Neo4j data/log volumes
+remain unless explicitly removed.
 
 ## Repository Layout
 
@@ -160,7 +192,9 @@ apps/backend/          FastAPI application and backend tests
 apps/frontend/         React application and frontend tests
 docs/data-contract.md  Authoritative Phase 1 source and canonical schemas
 docs/analytics.md      Phase 2 analytical contract and CLI semantics
+docs/graph-model.md    Phase 3 factual graph ontology and integrity rules
+docs/deployment/       Offline Neo4j image and operational workflow
 docs/benchmarks/       Reproducible benchmark reports
 docs/architecture/     Implemented architecture decisions
-infrastructure/docker/ Application Dockerfiles
+infrastructure/docker/ Application and pinned Neo4j Dockerfiles
 ```

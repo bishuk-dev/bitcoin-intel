@@ -17,3 +17,7 @@
 - Parquet remains canonical; any DuckDB state must be rebuildable from Parquet.
 - Aggregate one-to-many relations independently before joining analytical summaries.
 - Preserve integer satoshi correctness in analytical queries and aggregates.
+- Bitcoin addresses are not wallets, entities, people, or owners.
+- Parquet remains canonical; Neo4j is derived state that must be fully rebuildable.
+- Never use Neo4j internal node IDs as business or external identifiers.
+- Persist only factual base-graph relationships; inferred relationships belong to later phases.

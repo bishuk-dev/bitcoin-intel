@@ -8,6 +8,10 @@ from pathlib import Path
 
 from bitcoin_intel.analytics.cli import configure_analytics_parser, run_analytics_command
 from bitcoin_intel.analytics.dataset import AnalyticalDatasetError
+from bitcoin_intel.graph.cli import configure_graph_parser, run_graph_command
+from bitcoin_intel.graph.connection import GraphConnectionError
+from bitcoin_intel.graph.docker import GraphRebuildError
+from bitcoin_intel.graph.import_builder import GraphImportError
 from bitcoin_intel.ingestion.errors import IngestionFileError
 from bitcoin_intel.ingestion.pipeline import ingest_file
 
@@ -21,6 +25,7 @@ def build_parser() -> argparse.ArgumentParser:
     ingest_parser.add_argument("--input", type=Path, required=True, help="source file path")
     ingest_parser.add_argument("--output", type=Path, required=True, help="new dataset directory")
     configure_analytics_parser(subparsers)
+    configure_graph_parser(subparsers)
     return parser
 
 
@@ -32,6 +37,19 @@ def main(arguments: Sequence[str] | None = None) -> int:
             return run_analytics_command(args)
         except (AnalyticalDatasetError, ValueError, OSError) as error:
             print(f"Analytics failed: {error}", file=sys.stderr)
+            return 1
+    if args.command == "graph":
+        try:
+            return run_graph_command(args)
+        except (
+            AnalyticalDatasetError,
+            GraphConnectionError,
+            GraphImportError,
+            GraphRebuildError,
+            ValueError,
+            OSError,
+        ) as error:
+            print(f"Graph operation failed: {error}", file=sys.stderr)
             return 1
     if args.command != "ingest":
         raise AssertionError("argparse accepted an unknown top-level command")

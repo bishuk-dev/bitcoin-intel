@@ -1,0 +1,168 @@
+{
+  "benchmark_version": "1.0",
+  "configuration": {
+    "duplicate_observation_ratio": 0.2,
+    "first_run_label": "first call after opening one verified driver",
+    "import_threads": 2,
+    "input_count_range": [
+      1,
+      3
+    ],
+    "ipv6_ratio": 0.25,
+    "max_off_heap_memory": "1G",
+    "memory_method": "maximum Docker-reported container memory sampled every 500 ms across the isolated Compose project during rebuild",
+    "output_count_range": [
+      1,
+      3
+    ],
+    "query_repetitions": 5,
+    "record_counts": [
+      10000,
+      100000
+    ],
+    "repeated_run_label": "median of subsequent calls through the same driver",
+    "seed": 42
+  },
+  "datasets": [
+    {
+      "canonical_records": 10000,
+      "counts": {
+        "addresses": 32075,
+        "created_output": 16058,
+        "destination_ip": 10000,
+        "ip_addresses": 5496,
+        "network_observations": 10000,
+        "observed_transaction": 10000,
+        "source_ip": 10000,
+        "spent_in": 16017,
+        "transactions": 8000
+      },
+      "gds_performance": {
+        "component_count": 8000,
+        "compute_millis": 86,
+        "estimated_bytes_max": 5689008,
+        "estimated_bytes_min": 5557840,
+        "first_run_ms": 5432.417099975282,
+        "graph_name": "phase3_validation_1c7820a6ee00413589581bfc8b1017b5",
+        "node_count": 40075,
+        "project_millis": 243,
+        "relationship_count": 32075,
+        "repeated_median_ms": 441.48280000081286
+      },
+      "graph_import_parquet_bytes": 3811499,
+      "graph_import_preparation_seconds": 3.184455299982801,
+      "neo4j_admin_dry_run_seconds": 39.787343499978306,
+      "neo4j_admin_import_seconds": 52.20084030000726,
+      "neo4j_store_bytes": 17473536,
+      "node_count": 55571,
+      "observations": 10000,
+      "peak_container_memory_bytes": 1346472247,
+      "query_performance": [
+        {
+          "first_run_ms": 3287.276799994288,
+          "query": "txid_neighborhood",
+          "repeated_median_ms": 96.32349997991696
+        },
+        {
+          "first_run_ms": 901.587100001052,
+          "query": "address_transactions",
+          "repeated_median_ms": 18.424700014293194
+        },
+        {
+          "first_run_ms": 1743.6288000026252,
+          "query": "ip_observations",
+          "repeated_median_ms": 47.93299999437295
+        },
+        {
+          "first_run_ms": 613.3766999992076,
+          "query": "bounded_path",
+          "repeated_median_ms": 21.386599983088672
+        }
+      ],
+      "relationship_count": 62075,
+      "unique_addresses": 32075,
+      "unique_ips": 5496,
+      "unique_transactions": 8000,
+      "versions": {
+        "apoc": "2026.07.1",
+        "edition": "community",
+        "gds": "2026.07.0",
+        "neo4j": "2026.07.1"
+      }
+    },
+    {
+      "canonical_records": 100000,
+      "counts": {
+        "addresses": 319938,
+        "created_output": 159958,
+        "destination_ip": 100000,
+        "ip_addresses": 46470,
+        "network_observations": 100000,
+        "observed_transaction": 100000,
+        "source_ip": 100000,
+        "spent_in": 159980,
+        "transactions": 80000
+      },
+      "gds_performance": {
+        "component_count": 80000,
+        "compute_millis": 346,
+        "estimated_bytes_max": 61359224,
+        "estimated_bytes_min": 60178712,
+        "first_run_ms": 6646.074799995404,
+        "graph_name": "phase3_validation_c3515b9884214ec7a78d84995100744b",
+        "node_count": 399938,
+        "project_millis": 1153,
+        "relationship_count": 319938,
+        "repeated_median_ms": 1679.1841000085697
+      },
+      "graph_import_parquet_bytes": 36428567,
+      "graph_import_preparation_seconds": 12.816514100006316,
+      "neo4j_admin_dry_run_seconds": 40.6785297000024,
+      "neo4j_admin_import_seconds": 63.326135100011015,
+      "neo4j_store_bytes": 196370432,
+      "node_count": 546408,
+      "observations": 100000,
+      "peak_container_memory_bytes": 1516123455,
+      "query_performance": [
+        {
+          "first_run_ms": 2701.4133999764454,
+          "query": "txid_neighborhood",
+          "repeated_median_ms": 98.60629998729564
+        },
+        {
+          "first_run_ms": 1123.5210000013467,
+          "query": "address_transactions",
+          "repeated_median_ms": 38.89680001884699
+        },
+        {
+          "first_run_ms": 2392.100400000345,
+          "query": "ip_observations",
+          "repeated_median_ms": 276.2920999957714
+        },
+        {
+          "first_run_ms": 577.0229999907315,
+          "query": "bounded_path",
+          "repeated_median_ms": 21.452899993164465
+        }
+      ],
+      "relationship_count": 619938,
+      "unique_addresses": 319938,
+      "unique_ips": 46470,
+      "unique_transactions": 80000,
+      "versions": {
+        "apoc": "2026.07.1",
+        "edition": "community",
+        "gds": "2026.07.0",
+        "neo4j": "2026.07.1"
+      }
+    }
+  ],
+  "environment": {
+    "logical_cpu_count": 4,
+    "neo4j_driver_version": "6.2.0",
+    "platform": "Windows-10-10.0.19045-SP0",
+    "processor": "Intel64 Family 6 Model 78 Stepping 3, GenuineIntel",
+    "python_version": "3.13.9"
+  },
+  "measured_at": "2026-08-28T04:52:34.271980Z"
+}

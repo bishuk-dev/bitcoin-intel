@@ -45,6 +45,34 @@ uv run bitcoin-intel analytics temporal --dataset ./dataset --bucket hour
 No command accepts arbitrary SQL. Full query and null/timestamp semantics are documented in
 [`../../docs/analytics.md`](../../docs/analytics.md).
 
+Phase 3 adds a derived Neo4j Community graph without changing Parquet ownership. Prepare and fully
+validate import Parquet without requiring a running database:
+
+```bash
+uv run bitcoin-intel graph prepare --dataset ./dataset --output ./graph-import
+uv run bitcoin-intel graph validate-import --input ./graph-import --dataset ./dataset
+```
+
+Database replacement is never automatic. The `graph rebuild` command performs a strict
+`neo4j-admin` dry run/import only when `--confirm-replace-database` is present. After import, use:
+
+```bash
+uv run bitcoin-intel graph health
+uv run bitcoin-intel graph validate --dataset ./dataset
+uv run bitcoin-intel graph tx --txid <64-hex-txid>
+uv run bitcoin-intel graph address --address <address>
+uv run bitcoin-intel graph ip --ip 192.0.2.1
+uv run bitcoin-intel graph path \
+  --source-kind address --source-id <address> \
+  --target-kind transaction --target-id <64-hex-txid> --max-depth 4
+uv run bitcoin-intel graph gds-verify
+```
+
+These are fixed, parameterized, bounded operations; there is no arbitrary Cypher interface. See
+[`../../docs/graph-model.md`](../../docs/graph-model.md) for semantics and
+[`../../docs/deployment/neo4j-offline.md`](../../docs/deployment/neo4j-offline.md) for credentials,
+the destructive rebuild workflow, and air-gapped image transfer.
+
 Run the deterministic Phase 2 benchmark manually; it is deliberately excluded from pytest:
 
 ```bash
@@ -56,6 +84,16 @@ uv run python scripts/benchmark_phase2.py \
 
 Measured results and the physical-layout recommendation are in
 [`../../docs/benchmarks/phase-2.md`](../../docs/benchmarks/phase-2.md).
+
+Run the manual Phase 3 graph benchmark only with Docker and explicit test paths:
+
+```bash
+uv run python scripts/benchmark_phase3.py \
+  --records 10000 100000 \
+  --seed 42 \
+  --output ../../benchmarks/results/phase-3-local.json \
+  --work-directory ../../benchmarks/work/phase3-local
+```
 
 Verification commands:
 

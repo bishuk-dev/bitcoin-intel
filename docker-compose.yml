@@ -31,3 +31,33 @@ services:
     ports:
       - "${FRONTEND_PORT:-5173}:5173"
 
+  neo4j:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/neo4j.Dockerfile
+    image: sih26146-neo4j:2026.07.1
+    environment:
+      NEO4J_AUTH: "${NEO4J_USER:-neo4j}/${NEO4J_PASSWORD:-}"
+      NEO4J_server_memory_heap_initial__size: ${NEO4J_HEAP_INITIAL_SIZE:-512m}
+      NEO4J_server_memory_heap_max__size: ${NEO4J_HEAP_MAX_SIZE:-1g}
+      NEO4J_server_memory_pagecache_size: ${NEO4J_PAGECACHE_SIZE:-512m}
+    ports:
+      - "127.0.0.1:${NEO4J_HTTP_PORT:-7474}:7474"
+      - "127.0.0.1:${NEO4J_BOLT_PORT:-7687}:7687"
+    volumes:
+      - neo4j-data:/data
+      - neo4j-logs:/logs
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          cypher-shell --username "$${NEO4J_AUTH%%/*}" --password "$${NEO4J_AUTH#*/}"
+          "RETURN 1" >/dev/null 2>&1
+      interval: 20s
+      timeout: 15s
+      retries: 6
+      start_period: 120s
+
+volumes:
+  neo4j-data:
+  neo4j-logs:
