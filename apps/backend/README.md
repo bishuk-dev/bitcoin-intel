@@ -28,6 +28,35 @@ reads them back for verification, and only then publishes the directory. See
 [`../../docs/data-contract.md`](../../docs/data-contract.md) for the complete source and canonical
 contract.
 
+Phase 2 adds embedded DuckDB sessions over those Parquet files. Parquet remains canonical; DuckDB is
+not a server and is not the sole durable store. Use the safe, typed analytical subcommands:
+
+```bash
+uv run bitcoin-intel analytics validate --dataset ./dataset
+uv run bitcoin-intel analytics tx --dataset ./dataset --txid <64-hex-txid>
+uv run bitcoin-intel analytics address --dataset ./dataset --address <address>
+uv run bitcoin-intel analytics high-value --dataset ./dataset --limit 20
+uv run bitcoin-intel analytics high-fee --dataset ./dataset --limit 20
+uv run bitcoin-intel analytics ip --dataset ./dataset --ip 192.0.2.1
+uv run bitcoin-intel analytics asn --dataset ./dataset --asn 64500
+uv run bitcoin-intel analytics temporal --dataset ./dataset --bucket hour
+```
+
+No command accepts arbitrary SQL. Full query and null/timestamp semantics are documented in
+[`../../docs/analytics.md`](../../docs/analytics.md).
+
+Run the deterministic Phase 2 benchmark manually; it is deliberately excluded from pytest:
+
+```bash
+uv run python scripts/benchmark_phase2.py \
+  --records 10000 100000 \
+  --seed 42 \
+  --output ../../benchmarks/results/phase-2-local.json
+```
+
+Measured results and the physical-layout recommendation are in
+[`../../docs/benchmarks/phase-2.md`](../../docs/benchmarks/phase-2.md).
+
 Verification commands:
 
 ```bash

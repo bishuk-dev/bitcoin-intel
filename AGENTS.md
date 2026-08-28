@@ -14,3 +14,6 @@
 - Canonical Bitcoin monetary values are integer satoshis; never round binary floating-point input.
 - Canonical data-contract changes must be backward-compatible or explicitly schema-versioned.
 - Never silently discard malformed source records or overwrite a conflicting TXID definition.
+- Parquet remains canonical; any DuckDB state must be rebuildable from Parquet.
+- Aggregate one-to-many relations independently before joining analytical summaries.
+- Preserve integer satoshi correctness in analytical queries and aggregates.

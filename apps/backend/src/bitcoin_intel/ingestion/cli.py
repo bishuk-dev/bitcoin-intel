@@ -6,6 +6,8 @@ import sys
 from collections.abc import Sequence
 from pathlib import Path
 
+from bitcoin_intel.analytics.cli import configure_analytics_parser, run_analytics_command
+from bitcoin_intel.analytics.dataset import AnalyticalDatasetError
 from bitcoin_intel.ingestion.errors import IngestionFileError
 from bitcoin_intel.ingestion.pipeline import ingest_file
 
@@ -18,14 +20,21 @@ def build_parser() -> argparse.ArgumentParser:
     )
     ingest_parser.add_argument("--input", type=Path, required=True, help="source file path")
     ingest_parser.add_argument("--output", type=Path, required=True, help="new dataset directory")
+    configure_analytics_parser(subparsers)
     return parser
 
 
 def main(arguments: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(arguments)
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
+    if args.command == "analytics":
+        try:
+            return run_analytics_command(args)
+        except (AnalyticalDatasetError, ValueError, OSError) as error:
+            print(f"Analytics failed: {error}", file=sys.stderr)
+            return 1
     if args.command != "ingest":
-        raise AssertionError("argparse accepted an unknown command")
+        raise AssertionError("argparse accepted an unknown top-level command")
     try:
         summary = ingest_file(args.input, args.output)
     except (IngestionFileError, OSError) as error:

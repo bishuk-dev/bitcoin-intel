@@ -1,0 +1,95 @@
+{
+  "benchmark_version": "1.0",
+  "configuration": {
+    "duplicate_observation_ratio": 0.2,
+    "first_run_label": "first execution in a fresh DuckDB connection; OS cache uncontrolled",
+    "format": "json",
+    "input_count_range": [
+      1,
+      3
+    ],
+    "ipv6_ratio": 0.25,
+    "memory_method": "process RSS sampled every 20 ms; includes generation and ingestion",
+    "output_count_range": [
+      1,
+      3
+    ],
+    "query_repetitions": 3,
+    "record_counts": [
+      500000
+    ],
+    "repeated_run_label": "median of subsequent executions in the same connection",
+    "seed": 42
+  },
+  "environment": {
+    "duckdb_version": "1.5.5",
+    "logical_cpu_count": 4,
+    "platform": "Windows-10-10.0.19045-SP0",
+    "polars_version": "1.44.1",
+    "processor": "Intel64 Family 6 Model 78 Stepping 3, GenuineIntel",
+    "pyarrow_version": "23.0.1",
+    "python_version": "3.13.9",
+    "total_memory_bytes": 12744126464
+  },
+  "ingestion_scaling": [
+    {
+      "accepted": 500000,
+      "generation_seconds": 218.22972599999048,
+      "ingestion_seconds": 626.7041782999877,
+      "input_bytes": 267007066,
+      "output_bytes": 167974749,
+      "peak_rss_bytes": 2498011136,
+      "record_count": 500000,
+      "records_per_second": 797.8245834522942,
+      "rejected": 0,
+      "sample_address": "bench-in-744872036435f0e84381-0",
+      "sample_ip": "192.0.2.103",
+      "sample_txid": "744872036435f0e843814c8e2b6b4a884498f2754b13834708373da0a377d806",
+      "unique_transactions": 400000
+    }
+  ],
+  "query_performance": [
+    {
+      "dataset_records": 500000,
+      "first_run_ms": 467.0652000058908,
+      "query": "txid_lookup",
+      "repeated_median_ms": 402.9322999995202,
+      "storage": "direct_parquet"
+    },
+    {
+      "dataset_records": 500000,
+      "first_run_ms": 234.07330000190996,
+      "query": "address_activity",
+      "repeated_median_ms": 247.52980002085678,
+      "storage": "direct_parquet"
+    },
+    {
+      "dataset_records": 500000,
+      "first_run_ms": 1057.376499986276,
+      "query": "high_value_ranking",
+      "repeated_median_ms": 1073.8761999818962,
+      "storage": "direct_parquet"
+    },
+    {
+      "dataset_records": 500000,
+      "first_run_ms": 533.8517999916803,
+      "query": "temporal_day",
+      "repeated_median_ms": 555.6800999911502,
+      "storage": "direct_parquet"
+    },
+    {
+      "dataset_records": 500000,
+      "first_run_ms": 195.64099999843165,
+      "query": "ip_activity",
+      "repeated_median_ms": 190.12430001748726,
+      "storage": "direct_parquet"
+    },
+    {
+      "dataset_records": 500000,
+      "first_run_ms": 1006.6865999833681,
+      "query": "transaction_summary_scan",
+      "repeated_median_ms": 934.9915999919176,
+      "storage": "direct_parquet"
+    }
+  ]
+}

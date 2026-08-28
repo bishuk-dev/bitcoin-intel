@@ -5,15 +5,20 @@ The intended product is an offline Linux-based investigative intelligence platfo
 
 ## Current Status
 
-**Phase 1 — Canonical Data Contract and Multi-Format Ingestion**
+**Phase 2 — Embedded DuckDB Analytical Layer**
 
-The repository contains the Phase 0 FastAPI health service and React developer screen plus a backend
-CLI that validates CSV, JSON, or XML Bitcoin metadata and writes a deterministic seven-table Parquet
-dataset. The authoritative schemas and source contracts are in
-[`docs/data-contract.md`](docs/data-contract.md).
+The repository contains the Phase 0 FastAPI health service and React developer screen, the Phase 1
+canonical ingestion pipeline, and a local DuckDB analytical layer over the seven-table Parquet
+dataset. Parquet remains the durable source of truth; every analytical session and experimental
+DuckDB materialization is rebuildable from it.
 
-DuckDB, graph storage, analytics, machine learning, risk scoring, alerts, GeoIP enrichment, API
-uploads, and investigation workflows are **not implemented yet**.
+The analytical CLI provides typed transaction, address, network, temporal, value, fee, and integrity
+operations without exposing arbitrary SQL. See [`docs/analytics.md`](docs/analytics.md) for query
+semantics and [`docs/benchmarks/phase-2.md`](docs/benchmarks/phase-2.md) for measured performance and
+the retained physical-layout decision.
+
+Graph storage, machine learning, risk scoring, alerts, GeoIP enrichment, API uploads, and
+investigation workflows are **not implemented yet**.
 
 The detailed product constraints remain in `project-context.md` and `instructions.md`.
 
@@ -62,6 +67,15 @@ uv run bitcoin-intel ingest \
 The destination must not already exist. The CLI reports read, accepted, rejected, transaction, and
 observation counts; rejected source records remain queryable in the output dataset.
 
+Validate and query a generated dataset through embedded DuckDB with:
+
+```bash
+uv run bitcoin-intel analytics validate --dataset ./dataset
+uv run bitcoin-intel analytics tx --dataset ./dataset --txid <64-hex-txid>
+uv run bitcoin-intel analytics address --dataset ./dataset --address <address>
+uv run bitcoin-intel analytics temporal --dataset ./dataset --bucket day
+```
+
 Configuration is loaded from environment variables. Copy `.env.example` into `apps/backend/.env`
 only when local overrides are needed. Never commit `.env`.
 
@@ -94,6 +108,16 @@ An optional non-CI synthetic JSON ingestion sanity check is available with:
 ```bash
 cd apps/backend
 uv run python scripts/benchmark_ingestion.py --records 10000
+```
+
+The reproducible Phase 2 analytical benchmark remains manual because it can consume substantial
+time and memory:
+
+```bash
+uv run python scripts/benchmark_phase2.py \
+  --records 10000 100000 \
+  --seed 42 \
+  --output ../../benchmarks/results/phase-2-local.json
 ```
 
 Frontend:
@@ -135,6 +159,8 @@ The backend is available at `http://127.0.0.1:8000/health` and the frontend at
 apps/backend/          FastAPI application and backend tests
 apps/frontend/         React application and frontend tests
 docs/data-contract.md  Authoritative Phase 1 source and canonical schemas
+docs/analytics.md      Phase 2 analytical contract and CLI semantics
+docs/benchmarks/       Reproducible benchmark reports
 docs/architecture/     Implemented architecture decisions
 infrastructure/docker/ Application Dockerfiles
 ```

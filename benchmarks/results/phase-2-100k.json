@@ -1,0 +1,354 @@
+{
+  "benchmark_version": "1.0",
+  "configuration": {
+    "duplicate_observation_ratio": 0.2,
+    "first_run_label": "first execution in a fresh DuckDB connection; OS cache uncontrolled",
+    "format": "json",
+    "input_count_range": [
+      1,
+      3
+    ],
+    "ipv6_ratio": 0.25,
+    "memory_method": "process RSS sampled every 20 ms; includes generation and ingestion",
+    "output_count_range": [
+      1,
+      3
+    ],
+    "query_repetitions": 5,
+    "record_counts": [
+      10000,
+      100000
+    ],
+    "repeated_run_label": "median of subsequent executions in the same connection",
+    "seed": 42
+  },
+  "environment": {
+    "duckdb_version": "1.5.5",
+    "logical_cpu_count": 4,
+    "platform": "Windows-10-10.0.19045-SP0",
+    "polars_version": "1.44.1",
+    "processor": "Intel64 Family 6 Model 78 Stepping 3, GenuineIntel",
+    "pyarrow_version": "23.0.1",
+    "python_version": "3.13.9",
+    "total_memory_bytes": 12744126464
+  },
+  "ingestion_scaling": [
+    {
+      "accepted": 10000,
+      "generation_seconds": 3.12575680000009,
+      "ingestion_seconds": 8.094601899996633,
+      "input_bytes": 5335803,
+      "output_bytes": 3506736,
+      "peak_rss_bytes": 178458624,
+      "record_count": 10000,
+      "records_per_second": 1235.3912055890185,
+      "rejected": 0,
+      "sample_address": "bench-in-43608c737e801f3e051a-0",
+      "sample_ip": "192.0.2.191",
+      "sample_txid": "43608c737e801f3e051af5025cf33029cf9fc7e6d6fb737d865029e5e63cdee3",
+      "unique_transactions": 8000
+    },
+    {
+      "accepted": 100000,
+      "generation_seconds": 23.763215799990576,
+      "ingestion_seconds": 65.61921529998654,
+      "input_bytes": 53414204,
+      "output_bytes": 33968153,
+      "peak_rss_bytes": 633737216,
+      "record_count": 100000,
+      "records_per_second": 1523.943856122591,
+      "rejected": 0,
+      "sample_address": "bench-in-ab19596cec39899cfc57-0",
+      "sample_ip": "192.0.2.123",
+      "sample_txid": "ab19596cec39899cfc572ce8a2250f7ad3c93176f63c542f1fd5b6c05adcdd67",
+      "unique_transactions": 80000
+    }
+  ],
+  "layout_experiments": {
+    "compression": [
+      {
+        "actual_file_count": 1,
+        "bytes": 11870473,
+        "compression": "zstd",
+        "full_scan_first_ms": 47.3902000230737,
+        "full_scan_repeated_median_ms": 48.12409999431111,
+        "requested_file_count": 1,
+        "row_group_count": 2,
+        "row_group_size": 65536,
+        "selective_txid_first_ms": 31.810700020287186,
+        "selective_txid_repeated_median_ms": 32.83399998326786,
+        "time_range_first_ms": 30.599899997469038,
+        "time_range_repeated_median_ms": 35.50390002783388,
+        "variant": "zstd",
+        "write_ms": 381.0059000097681
+      },
+      {
+        "actual_file_count": 1,
+        "bytes": 21549571,
+        "compression": "snappy",
+        "full_scan_first_ms": 54.41939999582246,
+        "full_scan_repeated_median_ms": 37.7151999855414,
+        "requested_file_count": 1,
+        "row_group_count": 2,
+        "row_group_size": 65536,
+        "selective_txid_first_ms": 20.650999998906627,
+        "selective_txid_repeated_median_ms": 25.157400028547272,
+        "time_range_first_ms": 25.771600019652396,
+        "time_range_repeated_median_ms": 28.408699989086017,
+        "variant": "snappy",
+        "write_ms": 283.6509000044316
+      },
+      {
+        "actual_file_count": 1,
+        "bytes": 23728837,
+        "compression": "uncompressed",
+        "full_scan_first_ms": 25.909099989803508,
+        "full_scan_repeated_median_ms": 33.98790000937879,
+        "requested_file_count": 1,
+        "row_group_count": 2,
+        "row_group_size": 65536,
+        "selective_txid_first_ms": 14.874999993480742,
+        "selective_txid_repeated_median_ms": 15.011100011179224,
+        "time_range_first_ms": 17.25759997498244,
+        "time_range_repeated_median_ms": 15.888499998254701,
+        "variant": "uncompressed",
+        "write_ms": 185.204999987036
+      }
+    ],
+    "dataset_records": 100000,
+    "file_counts": [
+      {
+        "actual_file_count": 1,
+        "bytes": 11870473,
+        "compression": "zstd",
+        "full_scan_first_ms": 44.28909998387098,
+        "full_scan_repeated_median_ms": 50.89879999286495,
+        "requested_file_count": 1,
+        "row_group_count": 2,
+        "row_group_size": 65536,
+        "selective_txid_first_ms": 29.234199988422915,
+        "selective_txid_repeated_median_ms": 31.463100021937862,
+        "time_range_first_ms": 28.816300007747486,
+        "time_range_repeated_median_ms": 33.846599981188774,
+        "variant": "files-1",
+        "write_ms": 380.8922000171151
+      },
+      {
+        "actual_file_count": 4,
+        "bytes": 12051436,
+        "compression": "zstd",
+        "full_scan_first_ms": 31.10930000548251,
+        "full_scan_repeated_median_ms": 29.1150999837555,
+        "requested_file_count": 4,
+        "row_group_count": 4,
+        "row_group_size": 65536,
+        "selective_txid_first_ms": 25.392600015038624,
+        "selective_txid_repeated_median_ms": 26.056200003949925,
+        "time_range_first_ms": 19.20879998942837,
+        "time_range_repeated_median_ms": 19.84900000388734,
+        "variant": "files-4",
+        "write_ms": 394.3297000078019
+      },
+      {
+        "actual_file_count": 32,
+        "bytes": 12265492,
+        "compression": "zstd",
+        "full_scan_first_ms": 41.652899992186576,
+        "full_scan_repeated_median_ms": 38.23730000294745,
+        "requested_file_count": 32,
+        "row_group_count": 32,
+        "row_group_size": 65536,
+        "selective_txid_first_ms": 22.940900002140552,
+        "selective_txid_repeated_median_ms": 24.7961999848485,
+        "time_range_first_ms": 27.78180001769215,
+        "time_range_repeated_median_ms": 29.945199989015236,
+        "variant": "files-32",
+        "write_ms": 597.6280999893788
+      }
+    ],
+    "row_group_sizes": [
+      {
+        "actual_file_count": 1,
+        "bytes": 11959571,
+        "compression": "zstd",
+        "full_scan_first_ms": 31.879199988907203,
+        "full_scan_repeated_median_ms": 30.6292999885045,
+        "requested_file_count": 1,
+        "row_group_count": 4,
+        "row_group_size": 32768,
+        "selective_txid_first_ms": 24.31439998326823,
+        "selective_txid_repeated_median_ms": 29.62340001249686,
+        "time_range_first_ms": 23.3101999911014,
+        "time_range_repeated_median_ms": 27.173200011020526,
+        "variant": "rows-32768",
+        "write_ms": 407.2335000091698
+      },
+      {
+        "actual_file_count": 1,
+        "bytes": 11789025,
+        "compression": "zstd",
+        "full_scan_first_ms": 58.10289998771623,
+        "full_scan_repeated_median_ms": 58.755100006237626,
+        "requested_file_count": 1,
+        "row_group_count": 1,
+        "row_group_size": 131072,
+        "selective_txid_first_ms": 60.552399983862415,
+        "selective_txid_repeated_median_ms": 62.43729998823255,
+        "time_range_first_ms": 44.697600009385496,
+        "time_range_repeated_median_ms": 52.85949999233708,
+        "variant": "rows-131072",
+        "write_ms": 572.3628999840003
+      },
+      {
+        "actual_file_count": 1,
+        "bytes": 11789025,
+        "compression": "zstd",
+        "full_scan_first_ms": 65.3378999850247,
+        "full_scan_repeated_median_ms": 63.59990002238192,
+        "requested_file_count": 1,
+        "row_group_count": 1,
+        "row_group_size": 524288,
+        "selective_txid_first_ms": 61.192499997559935,
+        "selective_txid_repeated_median_ms": 55.43279999983497,
+        "time_range_first_ms": 39.120899979025126,
+        "time_range_repeated_median_ms": 35.75400001136586,
+        "variant": "rows-524288",
+        "write_ms": 336.424499982968
+      }
+    ],
+    "table": "network_observations",
+    "table_rows": 100000
+  },
+  "materialization_experiment": {
+    "build_seconds": 2.8059792000276502,
+    "database_bytes": 44314624,
+    "dataset_records": 100000,
+    "indexes_created": 0,
+    "queries": [
+      {
+        "first_run_ms": 129.86970000201836,
+        "query": "txid_lookup",
+        "repeated_median_ms": 59.06509998021647
+      },
+      {
+        "first_run_ms": 32.907000015256926,
+        "query": "address_activity",
+        "repeated_median_ms": 33.5987999860663
+      },
+      {
+        "first_run_ms": 180.61760001000948,
+        "query": "high_value_ranking",
+        "repeated_median_ms": 144.29820000077598
+      },
+      {
+        "first_run_ms": 178.9567999949213,
+        "query": "temporal_day",
+        "repeated_median_ms": 177.5041000219062
+      },
+      {
+        "first_run_ms": 60.7105000235606,
+        "query": "ip_activity",
+        "repeated_median_ms": 35.98479999345727
+      },
+      {
+        "first_run_ms": 133.79510000231676,
+        "query": "transaction_summary_scan",
+        "repeated_median_ms": 136.21570001123473
+      }
+    ]
+  },
+  "query_performance": [
+    {
+      "dataset_records": 10000,
+      "first_run_ms": 179.8621999914758,
+      "query": "txid_lookup",
+      "repeated_median_ms": 76.20770001085475,
+      "storage": "direct_parquet"
+    },
+    {
+      "dataset_records": 10000,
+      "first_run_ms": 35.325000004377216,
+      "query": "address_activity",
+      "repeated_median_ms": 35.799300007056445,
+      "storage": "direct_parquet"
+    },
+    {
+      "dataset_records": 10000,
+      "first_run_ms": 48.99229999864474,
+      "query": "high_value_ranking",
+      "repeated_median_ms": 50.653999991482124,
+      "storage": "direct_parquet"
+    },
+    {
+      "dataset_records": 10000,
+      "first_run_ms": 26.34870001929812,
+      "query": "temporal_day",
+      "repeated_median_ms": 27.29129997896962,
+      "storage": "direct_parquet"
+    },
+    {
+      "dataset_records": 10000,
+      "first_run_ms": 36.48650000104681,
+      "query": "ip_activity",
+      "repeated_median_ms": 47.57900000549853,
+      "storage": "direct_parquet"
+    },
+    {
+      "dataset_records": 10000,
+      "first_run_ms": 35.30319998390041,
+      "query": "transaction_summary_scan",
+      "repeated_median_ms": 32.766599993919954,
+      "storage": "direct_parquet"
+    },
+    {
+      "dataset_records": 100000,
+      "first_run_ms": 165.36980000091717,
+      "query": "txid_lookup",
+      "repeated_median_ms": 175.38060000515543,
+      "storage": "direct_parquet"
+    },
+    {
+      "dataset_records": 100000,
+      "first_run_ms": 62.27170000784099,
+      "query": "address_activity",
+      "repeated_median_ms": 75.9134000109043,
+      "storage": "direct_parquet"
+    },
+    {
+      "dataset_records": 100000,
+      "first_run_ms": 199.5421999890823,
+      "query": "high_value_ranking",
+      "repeated_median_ms": 182.7503000095021,
+      "storage": "direct_parquet"
+    },
+    {
+      "dataset_records": 100000,
+      "first_run_ms": 140.44550000107847,
+      "query": "temporal_day",
+      "repeated_median_ms": 123.99699998786673,
+      "storage": "direct_parquet"
+    },
+    {
+      "dataset_records": 100000,
+      "first_run_ms": 86.56450000125915,
+      "query": "ip_activity",
+      "repeated_median_ms": 73.14429999678396,
+      "storage": "direct_parquet"
+    },
+    {
+      "dataset_records": 100000,
+      "first_run_ms": 140.10140000027604,
+      "query": "transaction_summary_scan",
+      "repeated_median_ms": 138.37299999431707,
+      "storage": "direct_parquet"
+    }
+  ],
+  "query_plans": {
+    "filter_visible_in_time_plan": true,
+    "filter_visible_in_txid_plan": true,
+    "projection_visible_in_time_plan": true,
+    "projection_visible_in_txid_plan": true,
+    "time_filter": "\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502        PARQUET_SCAN       \u2502\n\u2502    \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500   \u2502\n\u2502         Function:         \u2502\n\u2502        PARQUET_SCAN       \u2502\n\u2502                           \u2502\n\u2502        Projections:       \u2502\n\u2502       observation_id      \u2502\n\u2502                           \u2502\n\u2502          Filters:         \u2502\n\u2502  observed_at>='2026-01-15 \u2502\n\u2502   00:00:00+00'::TIMESTAMP \u2502\n\u2502     WITH TIME ZONE AND    \u2502\n\u2502   observed_at<'2026-01-16 \u2502\n\u2502   00:00:00+00'::TIMESTAMP \u2502\n\u2502       WITH TIME ZONE      \u2502\n\u2502                           \u2502\n\u2502        ~20,000 rows       \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n",
+    "txid_filter": "\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502        PARQUET_SCAN       \u2502\n\u2502    \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500   \u2502\n\u2502         Function:         \u2502\n\u2502        PARQUET_SCAN       \u2502\n\u2502                           \u2502\n\u2502        Projections:       \u2502\n\u2502            txid           \u2502\n\u2502          fee_sats         \u2502\n\u2502                           \u2502\n\u2502          Filters:         \u2502\n\u2502txid='ab19596cec39899cfc572\u2502\n\u2502ce8a2250f7ad3c93176f63c542f\u2502\n\u2502     1fd5b6c05adcdd67'     \u2502\n\u2502                           \u2502\n\u2502        ~16,000 rows       \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n"
+  }
+}
