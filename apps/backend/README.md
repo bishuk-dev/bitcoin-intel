@@ -129,6 +129,23 @@ command never loads it. Full methodology and claim limits are in
 The production image installs Debian `libgomp1`, the minimal OpenMP runtime required by the
 LightGBM CPU wheel. It does not include CUDA or other GPU runtime packages.
 
+Phase 8 builds a distinct, versioned entity-hypothesis store. Only unsuppressed multi-input
+evidence can merge addresses; network evidence and HDBSCAN/Leiden communities cannot:
+
+```bash
+uv run bitcoin-intel entity build \
+  --dataset ./dataset --features ./features --output ./entity-hypotheses
+uv run bitcoin-intel entity validate \
+  --entities ./entity-hypotheses --dataset ./dataset --features ./features
+uv run bitcoin-intel entity evaluate \
+  --entities ./entity-hypotheses --dataset ./dataset --features ./features \
+  --truth ./entity-truth.json --partition test
+```
+
+See [`../../docs/entity-resolution.md`](../../docs/entity-resolution.md). Candidate entities,
+membership support, network support, and communities are analytical hypotheses—not verified
+wallets, owners, people, control, guilt, criminality, or risk.
+
 Run the deterministic Phase 2 benchmark manually; it is deliberately excluded from pytest:
 
 ```bash
@@ -189,6 +206,14 @@ uv run python scripts/benchmark_phase7.py \
   --output ../../benchmarks/results/phase-7-local.json \
   --selection-output ../../benchmarks/results/model-selection-local.json \
   --work-directory ../../benchmarks/work/phase7-local --keep-data
+```
+
+Run the Phase 8 entity benchmark with validation-only detector selection and one held-out test:
+
+```bash
+uv run python scripts/benchmark_phase8.py \
+  --transactions 20000 --seed 42 \
+  --output ../../benchmarks/results/phase-8-local.json
 ```
 
 Verification commands:

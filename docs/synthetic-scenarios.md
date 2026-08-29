@@ -89,3 +89,23 @@ fields remain evaluation-only. An audit rejects truth keys in source, scenario n
 cross-group identifiers, single-class port/script/IP-prefix values, and implausible class ordering.
 The measured 20k profile has no such fingerprint; its best group-safe one-feature decision stump
 reaches 0.2659 Macro F1.
+
+## Phase 8 entity challenge
+
+`entity-challenge-v1` is a separate ownership-heuristic evaluation profile. It creates hidden
+multi-address and singleton entities, hubs, address chains, same-entity observations across
+different source IPs, different entities on shared infrastructure, strong and weak collaborative
+transactions, and ordinary transactions with collaborative-looking shapes.
+
+```bash
+uv run python scripts/generate_scenarios.py \
+  --profile entity-challenge-v1 --transactions 20000 --seed 42 \
+  --output ../../benchmarks/generated/entity-challenge-v1-20000
+```
+
+`source.json` contains only Phase 1 input fields. `entity-truth.json` is evaluation-only and maps
+opaque addresses to hidden entities and marks collaborative inputs. Each entity belongs wholly to
+development, validation, or test; no entity crosses a tuning boundary. The audit rejects truth
+keys in source, conflicting duplicate transaction definitions, duplicate truth membership, and
+truth/source address-coverage differences. Exact source IP reuse across entities is intentional so
+network identity cannot become an ownership shortcut.

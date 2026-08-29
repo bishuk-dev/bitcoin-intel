@@ -5,7 +5,7 @@ The intended product is an offline Linux-based investigative intelligence platfo
 
 ## Current Status
 
-**Phase 7 — Advanced Classical ML, Harder Evaluation, and Model Selection**
+**Phase 8 — Conservative Entity Resolution, Address Clustering, and Communities**
 
 The repository contains the Phase 0 FastAPI health service and React developer screen, Phase 1
 canonical ingestion, local DuckDB analytics, a derived Neo4j Community factual graph, a versioned
@@ -46,8 +46,15 @@ the fallback, and Isolation Forest is the preferred anomaly model under this syn
 See [`docs/ml-model-selection.md`](docs/ml-model-selection.md) and the
 [`Phase 7 benchmark`](docs/benchmarks/phase-7.md).
 
-Entity resolution, production risk integration, model fusion, risk scoring, alerts, graph HTTP
-endpoints, and graph visualization are **not implemented yet**.
+Phase 8 adds a separate `entity-hypotheses` Parquet layer with collaborative-transaction-aware
+multi-input clustering, auditable ownership evidence, transitive/bridge diagnostics, supporting-only
+network evidence, HDBSCAN behavioral communities, and Leiden topological communities. The hidden
+`entity-challenge-v1` truth is entity-safe across development/validation/test boundaries. See
+[`docs/entity-resolution.md`](docs/entity-resolution.md) and the
+[`Phase 8 benchmark`](docs/benchmarks/phase-8.md).
+
+Production risk integration, model fusion, risk scoring, alerts, graph HTTP endpoints, and graph
+visualization are **not implemented yet**.
 
 The detailed product constraints remain in `project-context.md` and `instructions.md`.
 
@@ -160,6 +167,21 @@ uv run bitcoin-intel ml evaluate --experiment ./experiments/<experiment-id>
 `evaluate` validates metadata and file hashes without deserializing `model.joblib`. Joblib model
 files are trusted locally-generated artifacts only.
 
+Build, validate, and evaluate conservative entity hypotheses with:
+
+```bash
+uv run bitcoin-intel entity build \
+  --dataset ./dataset --features ./features --output ./entity-hypotheses
+uv run bitcoin-intel entity validate \
+  --entities ./entity-hypotheses --dataset ./dataset --features ./features
+uv run bitcoin-intel entity evaluate \
+  --entities ./entity-hypotheses --dataset ./dataset --features ./features \
+  --truth ./entity-truth.json --partition test
+```
+
+The evaluated Phase 8 defaults were selected on the challenge validation partition. Candidate
+entities and both community outputs remain hypotheses, not ownership, identity, or risk facts.
+
 ## Frontend Setup
 
 In a second terminal, from the repository root:
@@ -251,6 +273,15 @@ uv run python scripts/benchmark_phase7.py \
   --work-directory ../../benchmarks/work/phase7-local --keep-data
 ```
 
+The Phase 8 benchmark selects collaborative suppression on validation, opens test once, and checks
+an independent deterministic rebuild:
+
+```bash
+uv run python scripts/benchmark_phase8.py \
+  --transactions 20000 --seed 42 \
+  --output ../../benchmarks/results/phase-8-local.json
+```
+
 Frontend:
 
 ```bash
@@ -300,6 +331,7 @@ docs/synthetic-scenarios.md  Connected evaluation-data generator and truth separ
 docs/ml-baselines.md   Phase 5 model, leakage, split, metric, and artifact semantics
 docs/ip-enrichment.md  Phase 6 offline resource, schema, provenance, and limitation contract
 docs/ml-model-selection.md  Phase 7 challenge evaluation and classical-model selection
+docs/entity-resolution.md  Phase 8 ownership hypotheses, evidence, communities, and evaluation
 docs/deployment/       Offline Neo4j image and operational workflow
 docs/benchmarks/       Reproducible benchmark reports
 docs/architecture/     Implemented architecture decisions

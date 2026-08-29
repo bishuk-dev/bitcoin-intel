@@ -1,4 +1,4 @@
-# Implemented Architecture Through Phase 7
+# Implemented Architecture Through Phase 8
 
 The repository is a monorepo with independently managed backend and frontend applications:
 
@@ -176,5 +176,22 @@ families to the existing artifact contract. Selection points to existing experim
 than copying model binaries. Model probabilities and anomaly scores remain experimental signals,
 not risk. See [`../ml-model-selection.md`](../ml-model-selection.md).
 
-Entity resolution, production risk integration/model fusion, risk scoring, alerts, graph HTTP endpoints,
-and dashboard visualization remain future-phase concerns and have no placeholders.
+Phase 8 adds a third rebuildable analytical branch without changing the factual graph:
+
+```text
+Canonical Parquet ───────────────▶ collaborative detector ─▶ selected MIH edges
+       │                                                        │
+       ├─▶ network observations ─▶ supporting evidence only     ├─▶ candidate entities
+       │                                                        │
+Feature Parquet ─▶ HDBSCAN behavioral communities               └─▶ bridge diagnostics
+       │
+       └─ canonical co-transaction projection ─▶ Leiden topological communities
+```
+
+Union-find receives only unsuppressed strong MIH edges. Network correlations and both community
+lanes are structurally separate and cannot create candidate ownership. The entity manifest binds
+canonical and feature lineage plus all inference configuration; explicit Parquet artifacts are
+validated before atomic publication. See [`../entity-resolution.md`](../entity-resolution.md).
+
+Production risk integration/model fusion, risk scoring, alerts, graph HTTP endpoints, and dashboard
+visualization remain future-phase concerns and have no placeholders.

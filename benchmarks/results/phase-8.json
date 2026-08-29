@@ -1,0 +1,613 @@
+{
+  "benchmark_version": "1.0",
+  "claim_limit": "Synthetic ownership truth evaluates heuristics only; it does not establish real-world ownership, identity, control, guilt, or criminality.",
+  "configuration": {
+    "feature_schema": "1.0.0 (address-feature columns are identical to v2)",
+    "seed": 42,
+    "selection_policy": "validation pairwise precision, then lower collaborative false-merge rate, then pairwise F1",
+    "test_access_policy": "test evaluated once after detector configuration freeze",
+    "transactions": 20000
+  },
+  "environment": {
+    "cpu_count": 4,
+    "igraph": "1.0.0",
+    "platform": "Windows-10-10.0.19045-SP0",
+    "pyarrow": "23.0.1",
+    "python": "3.13.9",
+    "scikit_learn": "1.9.0"
+  },
+  "generation": {
+    "address_count": 7400,
+    "collaborative_transaction_count": 1000,
+    "entity_count": 2500,
+    "observation_count": 22858,
+    "output_path": "challenge",
+    "partition_entity_counts": {
+      "development": 1500,
+      "test": 500,
+      "validation": 500
+    },
+    "profile": "entity-challenge-v1",
+    "source_sha256": "de0735320728a63cbc339a31aca24c8f1101ee7d682ff0f444211c3f6e9546c2",
+    "transaction_count": 20000,
+    "truth_sha256": "d391858820c1f979ed3be2d58945a680b5fe5d68d85a7bd981bce24e36ce1816"
+  },
+  "held_out_test": {
+    "address_count": 1590,
+    "baselines": {
+      "collaborative_suppression": {
+        "adjusted_mutual_information": 0.9978840537833559,
+        "adjusted_rand_index": 0.9962617818707039,
+        "b_cubed_f1": 0.9984251968503937,
+        "b_cubed_precision": 1.0,
+        "b_cubed_recall": 0.9968553459119497,
+        "candidate_count": 503,
+        "collaborative_false_merge_rate": 0.0,
+        "collaborative_transaction_count": 200,
+        "fragmented_entity_rate": 0.006,
+        "overmerged_candidate_rate": 0.0,
+        "pairwise_f1": 0.9962677282906196,
+        "pairwise_precision": 1.0,
+        "pairwise_recall": 0.992563212692117
+      },
+      "final_conservative": {
+        "adjusted_mutual_information": 0.9978840537833559,
+        "adjusted_rand_index": 0.9962617818707039,
+        "b_cubed_f1": 0.9984251968503937,
+        "b_cubed_precision": 1.0,
+        "b_cubed_recall": 0.9968553459119497,
+        "candidate_count": 503,
+        "collaborative_false_merge_rate": 0.0,
+        "collaborative_transaction_count": 200,
+        "fragmented_entity_rate": 0.006,
+        "overmerged_candidate_rate": 0.0,
+        "pairwise_f1": 0.9962677282906196,
+        "pairwise_precision": 1.0,
+        "pairwise_recall": 0.992563212692117
+      },
+      "raw_mih": {
+        "adjusted_mutual_information": 0.5062737642893194,
+        "adjusted_rand_index": 0.10523864867281287,
+        "b_cubed_f1": 0.32874028245225306,
+        "b_cubed_precision": 0.1967834105569341,
+        "b_cubed_recall": 0.9979035639412999,
+        "candidate_count": 94,
+        "collaborative_false_merge_rate": 1.0,
+        "collaborative_transaction_count": 200,
+        "fragmented_entity_rate": 0.004,
+        "overmerged_candidate_rate": 0.5106382978723404,
+        "pairwise_f1": 0.10794094710517114,
+        "pairwise_precision": 0.05706568097810634,
+        "pairwise_recall": 0.9950421417947447
+      }
+    },
+    "build_configuration": {
+      "behavioral_min_cluster_size": 5,
+      "behavioral_min_samples": 3,
+      "collaborative_min_equal_fraction": 0.5,
+      "collaborative_min_equal_outputs": 2,
+      "collaborative_min_inputs": 3,
+      "collaborative_min_outputs": 3,
+      "leiden_seed": 42
+    },
+    "entity_count": 500,
+    "evaluation_schema_version": "1.0.0",
+    "partition": "test",
+    "precision_first": true,
+    "truth_schema_version": "1.0.0"
+  },
+  "phase": 8,
+  "preparation": {
+    "accepted_observations": 22858,
+    "excluded_from_entity_build_timing": true,
+    "feature_rows": {
+      "address_features": 7400,
+      "correlation_features": 7400,
+      "ip_features": 208,
+      "transaction_features": 20000
+    },
+    "seconds": 22.169875200022943,
+    "unique_transactions": 20000
+  },
+  "selected_artifact": {
+    "entity_dataset_id": "eccf14b3081206df356e2affe7876d7787eaebf44cd90bafe288f98f6e90f042",
+    "output_bytes": 4803824,
+    "output_rows": {
+      "behavioral_communities": 7400,
+      "candidate_entities": 2506,
+      "candidate_memberships": 7400,
+      "collaborative_transactions": 20000,
+      "ownership_evidence": 65109,
+      "topological_communities": 7400
+    },
+    "repeat_build_seconds": 25.923659699968994,
+    "repeat_entity_dataset_id_equal": true,
+    "repeat_parquet_hashes_equal": true
+  },
+  "selection": {
+    "selected_candidate_index": 0,
+    "selected_configuration": {
+      "behavioral_min_cluster_size": 5,
+      "behavioral_min_samples": 3,
+      "collaborative_min_equal_fraction": 0.5,
+      "collaborative_min_equal_outputs": 2,
+      "collaborative_min_inputs": 3,
+      "collaborative_min_outputs": 3,
+      "leiden_seed": 42
+    },
+    "selection_partition": "validation"
+  },
+  "validation_candidates": [
+    {
+      "build_seconds": 26.179399399959948,
+      "configuration": {
+        "behavioral_min_cluster_size": 5,
+        "behavioral_min_samples": 3,
+        "collaborative_min_equal_fraction": 0.5,
+        "collaborative_min_equal_outputs": 2,
+        "collaborative_min_inputs": 3,
+        "collaborative_min_outputs": 3,
+        "leiden_seed": 42
+      },
+      "development": {
+        "address_count": 4223,
+        "baselines": {
+          "collaborative_suppression": {
+            "adjusted_mutual_information": 0.9991549469775907,
+            "adjusted_rand_index": 0.9985064723859978,
+            "b_cubed_f1": 0.999407653121668,
+            "b_cubed_precision": 1.0,
+            "b_cubed_recall": 0.9988160075775515,
+            "candidate_count": 1503,
+            "collaborative_false_merge_rate": 0.0,
+            "collaborative_transaction_count": 600,
+            "fragmented_entity_rate": 0.002,
+            "overmerged_candidate_rate": 0.0,
+            "pairwise_f1": 0.9985073141606129,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 0.9970190779014309
+          },
+          "final_conservative": {
+            "adjusted_mutual_information": 0.9991549469775907,
+            "adjusted_rand_index": 0.9985064723859978,
+            "b_cubed_f1": 0.999407653121668,
+            "b_cubed_precision": 1.0,
+            "b_cubed_recall": 0.9988160075775515,
+            "candidate_count": 1503,
+            "collaborative_false_merge_rate": 0.0,
+            "collaborative_transaction_count": 600,
+            "fragmented_entity_rate": 0.002,
+            "overmerged_candidate_rate": 0.0,
+            "pairwise_f1": 0.9985073141606129,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 0.9970190779014309
+          },
+          "raw_mih": {
+            "adjusted_mutual_information": 0.6521695733582011,
+            "adjusted_rand_index": 0.29115143352403733,
+            "b_cubed_f1": 0.6478596163257518,
+            "b_cubed_precision": 0.47922701268676127,
+            "b_cubed_recall": 0.9996053358591838,
+            "candidate_count": 680,
+            "collaborative_false_merge_rate": 1.0,
+            "collaborative_transaction_count": 600,
+            "fragmented_entity_rate": 0.0006666666666666666,
+            "overmerged_candidate_rate": 0.175,
+            "pairwise_f1": 0.29183477983222555,
+            "pairwise_precision": 0.17087596451272988,
+            "pairwise_recall": 0.999006359300477
+          }
+        },
+        "build_configuration": {
+          "behavioral_min_cluster_size": 5,
+          "behavioral_min_samples": 3,
+          "collaborative_min_equal_fraction": 0.5,
+          "collaborative_min_equal_outputs": 2,
+          "collaborative_min_inputs": 3,
+          "collaborative_min_outputs": 3,
+          "leiden_seed": 42
+        },
+        "entity_count": 1500,
+        "evaluation_schema_version": "1.0.0",
+        "partition": "development",
+        "precision_first": true,
+        "truth_schema_version": "1.0.0"
+      },
+      "index": 0,
+      "summary": {
+        "address_count": 7400,
+        "behavioral_noise_count": 2259,
+        "candidate_entity_count": 2506,
+        "entity_dataset_id": "eccf14b3081206df356e2affe7876d7787eaebf44cd90bafe288f98f6e90f042",
+        "output_path": "entity-candidate-0",
+        "suppressed_transaction_count": 1151,
+        "table_rows": {
+          "behavioral_communities": 7400,
+          "candidate_entities": 2506,
+          "candidate_memberships": 7400,
+          "collaborative_transactions": 20000,
+          "ownership_evidence": 65109,
+          "topological_communities": 7400
+        }
+      },
+      "validation": {
+        "address_count": 1587,
+        "baselines": {
+          "collaborative_suppression": {
+            "adjusted_mutual_information": 1.0,
+            "adjusted_rand_index": 1.0,
+            "b_cubed_f1": 1.0,
+            "b_cubed_precision": 1.0,
+            "b_cubed_recall": 1.0,
+            "candidate_count": 500,
+            "collaborative_false_merge_rate": 0.0,
+            "collaborative_transaction_count": 200,
+            "fragmented_entity_rate": 0.0,
+            "overmerged_candidate_rate": 0.0,
+            "pairwise_f1": 1.0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0
+          },
+          "final_conservative": {
+            "adjusted_mutual_information": 1.0,
+            "adjusted_rand_index": 1.0,
+            "b_cubed_f1": 1.0,
+            "b_cubed_precision": 1.0,
+            "b_cubed_recall": 1.0,
+            "candidate_count": 500,
+            "collaborative_false_merge_rate": 0.0,
+            "collaborative_transaction_count": 200,
+            "fragmented_entity_rate": 0.0,
+            "overmerged_candidate_rate": 0.0,
+            "pairwise_f1": 1.0,
+            "pairwise_precision": 1.0,
+            "pairwise_recall": 1.0
+          },
+          "raw_mih": {
+            "adjusted_mutual_information": 0.5035658306965233,
+            "adjusted_rand_index": 0.10091997594503961,
+            "b_cubed_f1": 0.3289833987495683,
+            "b_cubed_precision": 0.19687620009483334,
+            "b_cubed_recall": 1.0,
+            "candidate_count": 92,
+            "collaborative_false_merge_rate": 1.0,
+            "collaborative_transaction_count": 200,
+            "fragmented_entity_rate": 0.0,
+            "overmerged_candidate_rate": 0.5108695652173914,
+            "pairwise_f1": 0.10363631664642182,
+            "pairwise_precision": 0.05465002180549498,
+            "pairwise_recall": 1.0
+          }
+        },
+        "build_configuration": {
+          "behavioral_min_cluster_size": 5,
+          "behavioral_min_samples": 3,
+          "collaborative_min_equal_fraction": 0.5,
+          "collaborative_min_equal_outputs": 2,
+          "collaborative_min_inputs": 3,
+          "collaborative_min_outputs": 3,
+          "leiden_seed": 42
+        },
+        "entity_count": 500,
+        "evaluation_schema_version": "1.0.0",
+        "partition": "validation",
+        "precision_first": true,
+        "truth_schema_version": "1.0.0"
+      }
+    },
+    {
+      "build_seconds": 25.440692400035914,
+      "configuration": {
+        "behavioral_min_cluster_size": 5,
+        "behavioral_min_samples": 3,
+        "collaborative_min_equal_fraction": 0.5,
+        "collaborative_min_equal_outputs": 3,
+        "collaborative_min_inputs": 4,
+        "collaborative_min_outputs": 4,
+        "leiden_seed": 42
+      },
+      "development": {
+        "address_count": 4223,
+        "baselines": {
+          "collaborative_suppression": {
+            "adjusted_mutual_information": 0.9397757643250477,
+            "adjusted_rand_index": 0.7871252003665283,
+            "b_cubed_f1": 0.9662008579519641,
+            "b_cubed_precision": 0.9353023136676436,
+            "b_cubed_recall": 0.9992106717183677,
+            "candidate_count": 1399,
+            "collaborative_false_merge_rate": 0.14333333333333334,
+            "collaborative_transaction_count": 600,
+            "fragmented_entity_rate": 0.0013333333333333333,
+            "overmerged_candidate_rate": 0.012151536812008578,
+            "pairwise_f1": 0.7872707320896691,
+            "pairwise_precision": 0.6500129433083096,
+            "pairwise_recall": 0.9980127186009539
+          },
+          "final_conservative": {
+            "adjusted_mutual_information": 0.9397757643250477,
+            "adjusted_rand_index": 0.7871252003665283,
+            "b_cubed_f1": 0.9662008579519641,
+            "b_cubed_precision": 0.9353023136676436,
+            "b_cubed_recall": 0.9992106717183677,
+            "candidate_count": 1399,
+            "collaborative_false_merge_rate": 0.14333333333333334,
+            "collaborative_transaction_count": 600,
+            "fragmented_entity_rate": 0.0013333333333333333,
+            "overmerged_candidate_rate": 0.012151536812008578,
+            "pairwise_f1": 0.7872707320896691,
+            "pairwise_precision": 0.6500129433083096,
+            "pairwise_recall": 0.9980127186009539
+          },
+          "raw_mih": {
+            "adjusted_mutual_information": 0.6521695733582011,
+            "adjusted_rand_index": 0.29115143352403733,
+            "b_cubed_f1": 0.6478596163257518,
+            "b_cubed_precision": 0.47922701268676127,
+            "b_cubed_recall": 0.9996053358591838,
+            "candidate_count": 680,
+            "collaborative_false_merge_rate": 1.0,
+            "collaborative_transaction_count": 600,
+            "fragmented_entity_rate": 0.0006666666666666666,
+            "overmerged_candidate_rate": 0.175,
+            "pairwise_f1": 0.29183477983222555,
+            "pairwise_precision": 0.17087596451272988,
+            "pairwise_recall": 0.999006359300477
+          }
+        },
+        "build_configuration": {
+          "behavioral_min_cluster_size": 5,
+          "behavioral_min_samples": 3,
+          "collaborative_min_equal_fraction": 0.5,
+          "collaborative_min_equal_outputs": 3,
+          "collaborative_min_inputs": 4,
+          "collaborative_min_outputs": 4,
+          "leiden_seed": 42
+        },
+        "entity_count": 1500,
+        "evaluation_schema_version": "1.0.0",
+        "partition": "development",
+        "precision_first": true,
+        "truth_schema_version": "1.0.0"
+      },
+      "index": 1,
+      "summary": {
+        "address_count": 7400,
+        "behavioral_noise_count": 2259,
+        "candidate_entity_count": 2313,
+        "entity_dataset_id": "4d9d3361f4b14c39ef759a4c875dee4acb90759ac595d499e6ed5c90fa1daf44",
+        "output_path": "entity-candidate-1",
+        "suppressed_transaction_count": 960,
+        "table_rows": {
+          "behavioral_communities": 7400,
+          "candidate_entities": 2313,
+          "candidate_memberships": 7400,
+          "collaborative_transactions": 20000,
+          "ownership_evidence": 65109,
+          "topological_communities": 7400
+        }
+      },
+      "validation": {
+        "address_count": 1587,
+        "baselines": {
+          "collaborative_suppression": {
+            "adjusted_mutual_information": 0.9377770385474684,
+            "adjusted_rand_index": 0.8200382208813985,
+            "b_cubed_f1": 0.9540449893001102,
+            "b_cubed_precision": 0.9121281312680178,
+            "b_cubed_recall": 1.0,
+            "candidate_count": 455,
+            "collaborative_false_merge_rate": 0.145,
+            "collaborative_transaction_count": 200,
+            "fragmented_entity_rate": 0.0,
+            "overmerged_candidate_rate": 0.035164835164835165,
+            "pairwise_f1": 0.8203764320785598,
+            "pairwise_precision": 0.6954561220950399,
+            "pairwise_recall": 1.0
+          },
+          "final_conservative": {
+            "adjusted_mutual_information": 0.9377770385474684,
+            "adjusted_rand_index": 0.8200382208813985,
+            "b_cubed_f1": 0.9540449893001102,
+            "b_cubed_precision": 0.9121281312680178,
+            "b_cubed_recall": 1.0,
+            "candidate_count": 455,
+            "collaborative_false_merge_rate": 0.145,
+            "collaborative_transaction_count": 200,
+            "fragmented_entity_rate": 0.0,
+            "overmerged_candidate_rate": 0.035164835164835165,
+            "pairwise_f1": 0.8203764320785598,
+            "pairwise_precision": 0.6954561220950399,
+            "pairwise_recall": 1.0
+          },
+          "raw_mih": {
+            "adjusted_mutual_information": 0.5035658306965233,
+            "adjusted_rand_index": 0.10091997594503961,
+            "b_cubed_f1": 0.3289833987495683,
+            "b_cubed_precision": 0.19687620009483334,
+            "b_cubed_recall": 1.0,
+            "candidate_count": 92,
+            "collaborative_false_merge_rate": 1.0,
+            "collaborative_transaction_count": 200,
+            "fragmented_entity_rate": 0.0,
+            "overmerged_candidate_rate": 0.5108695652173914,
+            "pairwise_f1": 0.10363631664642182,
+            "pairwise_precision": 0.05465002180549498,
+            "pairwise_recall": 1.0
+          }
+        },
+        "build_configuration": {
+          "behavioral_min_cluster_size": 5,
+          "behavioral_min_samples": 3,
+          "collaborative_min_equal_fraction": 0.5,
+          "collaborative_min_equal_outputs": 3,
+          "collaborative_min_inputs": 4,
+          "collaborative_min_outputs": 4,
+          "leiden_seed": 42
+        },
+        "entity_count": 500,
+        "evaluation_schema_version": "1.0.0",
+        "partition": "validation",
+        "precision_first": true,
+        "truth_schema_version": "1.0.0"
+      }
+    },
+    {
+      "build_seconds": 27.145793700008653,
+      "configuration": {
+        "behavioral_min_cluster_size": 5,
+        "behavioral_min_samples": 3,
+        "collaborative_min_equal_fraction": 0.75,
+        "collaborative_min_equal_outputs": 4,
+        "collaborative_min_inputs": 4,
+        "collaborative_min_outputs": 4,
+        "leiden_seed": 42
+      },
+      "development": {
+        "address_count": 4223,
+        "baselines": {
+          "collaborative_suppression": {
+            "adjusted_mutual_information": 0.9397757643250477,
+            "adjusted_rand_index": 0.7871252003665283,
+            "b_cubed_f1": 0.9662008579519641,
+            "b_cubed_precision": 0.9353023136676436,
+            "b_cubed_recall": 0.9992106717183677,
+            "candidate_count": 1399,
+            "collaborative_false_merge_rate": 0.14333333333333334,
+            "collaborative_transaction_count": 600,
+            "fragmented_entity_rate": 0.0013333333333333333,
+            "overmerged_candidate_rate": 0.012151536812008578,
+            "pairwise_f1": 0.7872707320896691,
+            "pairwise_precision": 0.6500129433083096,
+            "pairwise_recall": 0.9980127186009539
+          },
+          "final_conservative": {
+            "adjusted_mutual_information": 0.9397757643250477,
+            "adjusted_rand_index": 0.7871252003665283,
+            "b_cubed_f1": 0.9662008579519641,
+            "b_cubed_precision": 0.9353023136676436,
+            "b_cubed_recall": 0.9992106717183677,
+            "candidate_count": 1399,
+            "collaborative_false_merge_rate": 0.14333333333333334,
+            "collaborative_transaction_count": 600,
+            "fragmented_entity_rate": 0.0013333333333333333,
+            "overmerged_candidate_rate": 0.012151536812008578,
+            "pairwise_f1": 0.7872707320896691,
+            "pairwise_precision": 0.6500129433083096,
+            "pairwise_recall": 0.9980127186009539
+          },
+          "raw_mih": {
+            "adjusted_mutual_information": 0.6521695733582011,
+            "adjusted_rand_index": 0.29115143352403733,
+            "b_cubed_f1": 0.6478596163257518,
+            "b_cubed_precision": 0.47922701268676127,
+            "b_cubed_recall": 0.9996053358591838,
+            "candidate_count": 680,
+            "collaborative_false_merge_rate": 1.0,
+            "collaborative_transaction_count": 600,
+            "fragmented_entity_rate": 0.0006666666666666666,
+            "overmerged_candidate_rate": 0.175,
+            "pairwise_f1": 0.29183477983222555,
+            "pairwise_precision": 0.17087596451272988,
+            "pairwise_recall": 0.999006359300477
+          }
+        },
+        "build_configuration": {
+          "behavioral_min_cluster_size": 5,
+          "behavioral_min_samples": 3,
+          "collaborative_min_equal_fraction": 0.75,
+          "collaborative_min_equal_outputs": 4,
+          "collaborative_min_inputs": 4,
+          "collaborative_min_outputs": 4,
+          "leiden_seed": 42
+        },
+        "entity_count": 1500,
+        "evaluation_schema_version": "1.0.0",
+        "partition": "development",
+        "precision_first": true,
+        "truth_schema_version": "1.0.0"
+      },
+      "index": 2,
+      "summary": {
+        "address_count": 7400,
+        "behavioral_noise_count": 2259,
+        "candidate_entity_count": 2313,
+        "entity_dataset_id": "b19c0a6c528f98208a53b79c78f5f967840d083931ef63fc22f6fc2506b4178a",
+        "output_path": "entity-candidate-2",
+        "suppressed_transaction_count": 882,
+        "table_rows": {
+          "behavioral_communities": 7400,
+          "candidate_entities": 2313,
+          "candidate_memberships": 7400,
+          "collaborative_transactions": 20000,
+          "ownership_evidence": 65109,
+          "topological_communities": 7400
+        }
+      },
+      "validation": {
+        "address_count": 1587,
+        "baselines": {
+          "collaborative_suppression": {
+            "adjusted_mutual_information": 0.9377770385474684,
+            "adjusted_rand_index": 0.8200382208813985,
+            "b_cubed_f1": 0.9540449893001102,
+            "b_cubed_precision": 0.9121281312680178,
+            "b_cubed_recall": 1.0,
+            "candidate_count": 455,
+            "collaborative_false_merge_rate": 0.145,
+            "collaborative_transaction_count": 200,
+            "fragmented_entity_rate": 0.0,
+            "overmerged_candidate_rate": 0.035164835164835165,
+            "pairwise_f1": 0.8203764320785598,
+            "pairwise_precision": 0.6954561220950399,
+            "pairwise_recall": 1.0
+          },
+          "final_conservative": {
+            "adjusted_mutual_information": 0.9377770385474684,
+            "adjusted_rand_index": 0.8200382208813985,
+            "b_cubed_f1": 0.9540449893001102,
+            "b_cubed_precision": 0.9121281312680178,
+            "b_cubed_recall": 1.0,
+            "candidate_count": 455,
+            "collaborative_false_merge_rate": 0.145,
+            "collaborative_transaction_count": 200,
+            "fragmented_entity_rate": 0.0,
+            "overmerged_candidate_rate": 0.035164835164835165,
+            "pairwise_f1": 0.8203764320785598,
+            "pairwise_precision": 0.6954561220950399,
+            "pairwise_recall": 1.0
+          },
+          "raw_mih": {
+            "adjusted_mutual_information": 0.5035658306965233,
+            "adjusted_rand_index": 0.10091997594503961,
+            "b_cubed_f1": 0.3289833987495683,
+            "b_cubed_precision": 0.19687620009483334,
+            "b_cubed_recall": 1.0,
+            "candidate_count": 92,
+            "collaborative_false_merge_rate": 1.0,
+            "collaborative_transaction_count": 200,
+            "fragmented_entity_rate": 0.0,
+            "overmerged_candidate_rate": 0.5108695652173914,
+            "pairwise_f1": 0.10363631664642182,
+            "pairwise_precision": 0.05465002180549498,
+            "pairwise_recall": 1.0
+          }
+        },
+        "build_configuration": {
+          "behavioral_min_cluster_size": 5,
+          "behavioral_min_samples": 3,
+          "collaborative_min_equal_fraction": 0.75,
+          "collaborative_min_equal_outputs": 4,
+          "collaborative_min_inputs": 4,
+          "collaborative_min_outputs": 4,
+          "leiden_seed": 42
+        },
+        "entity_count": 500,
+        "evaluation_schema_version": "1.0.0",
+        "partition": "validation",
+        "precision_first": true,
+        "truth_schema_version": "1.0.0"
+      }
+    }
+  ]
+}

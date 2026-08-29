@@ -36,3 +36,6 @@
 - Model selection must use leakage-safe challenge evaluation, not the easy Phase 5 scenario set.
 - Perfect synthetic performance requires a generator and leakage audit.
 - Model probability and anomaly score are not investigative risk.
+- Candidate entities are hypotheses, not wallets, owners, people, or verified control.
+- Network correlation and behavioral/topological communities must never create ownership merges.
+- Collaborative-transaction suppression is heuristic and must not be presented as definitive CoinJoin detection.

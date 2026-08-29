@@ -11,6 +11,11 @@ from bitcoin_intel.benchmarking.challenge import (
     ChallengeGenerationSummary,
     write_challenge_bundle,
 )
+from bitcoin_intel.benchmarking.entity_challenge import (
+    EntityChallengeConfig,
+    EntityChallengeSummary,
+    write_entity_challenge_bundle,
+)
 from bitcoin_intel.benchmarking.scenarios import (
     DEFAULT_SCENARIO_PROPORTIONS,
     ScenarioConfig,
@@ -29,9 +34,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--group-size", type=int, default=20)
     parser.add_argument(
         "--profile",
-        choices=("historical", "challenge-v1"),
+        choices=("historical", "challenge-v1", "entity-challenge-v1"),
         default="historical",
-        help="preserve the historical generator by default; opt into Phase 7 challenge-v1",
+        help="preserve historical output by default; opt into a versioned challenge profile",
     )
     parser.add_argument(
         "--scenario-proportion",
@@ -50,8 +55,15 @@ def main(arguments: Sequence[str] | None = None) -> int:
         if args.scenario_proportion
         else DEFAULT_SCENARIO_PROPORTIONS
     )
-    summary: ChallengeGenerationSummary | ScenarioGenerationSummary
-    if args.profile == "challenge-v1":
+    summary: ChallengeGenerationSummary | EntityChallengeSummary | ScenarioGenerationSummary
+    if args.profile == "entity-challenge-v1":
+        if args.scenario_proportion:
+            raise SystemExit("entity-challenge-v1 uses fixed versioned proportions")
+        summary = write_entity_challenge_bundle(
+            args.output,
+            EntityChallengeConfig(transaction_count=args.transactions, seed=args.seed),
+        )
+    elif args.profile == "challenge-v1":
         if args.scenario_proportion:
             raise SystemExit("challenge-v1 uses fixed versioned proportions")
         summary = write_challenge_bundle(

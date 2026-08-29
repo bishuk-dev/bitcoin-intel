@@ -12,6 +12,10 @@ from bitcoin_intel.enrichment.cli import configure_enrichment_parser, run_enrich
 from bitcoin_intel.enrichment.pipeline import EnrichmentBuildError
 from bitcoin_intel.enrichment.resources import GeoIPResourceError
 from bitcoin_intel.enrichment.validation import EnrichmentStoreError
+from bitcoin_intel.entity.cli import configure_entity_parser, run_entity_command
+from bitcoin_intel.entity.evaluation import EntityEvaluationError
+from bitcoin_intel.entity.pipeline import EntityBuildError
+from bitcoin_intel.entity.validation import EntityStoreError
 from bitcoin_intel.features.cli import configure_features_parser, run_features_command
 from bitcoin_intel.features.pipeline import FeatureBuildError
 from bitcoin_intel.features.validation import FeatureStoreError
@@ -38,6 +42,7 @@ def build_parser() -> argparse.ArgumentParser:
     configure_graph_parser(subparsers)
     configure_features_parser(subparsers)
     configure_ml_parser(subparsers)
+    configure_entity_parser(subparsers)
     return parser
 
 
@@ -93,6 +98,19 @@ def main(arguments: Sequence[str] | None = None) -> int:
             return run_ml_command(args)
         except (MLExperimentError, ValueError, OSError) as error:
             print(f"ML experiment failed: {error}", file=sys.stderr)
+            return 1
+    if args.command == "entity":
+        try:
+            return run_entity_command(args)
+        except (
+            AnalyticalDatasetError,
+            EntityBuildError,
+            EntityEvaluationError,
+            EntityStoreError,
+            ValueError,
+            OSError,
+        ) as error:
+            print(f"Entity operation failed: {error}", file=sys.stderr)
             return 1
     if args.command != "ingest":
         raise AssertionError("argparse accepted an unknown top-level command")

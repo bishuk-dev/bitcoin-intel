@@ -6,6 +6,13 @@ from bitcoin_intel.benchmarking.challenge import (
     audit_challenge_bundle,
     write_challenge_bundle,
 )
+from bitcoin_intel.benchmarking.entity_challenge import (
+    ENTITY_CHALLENGE_PROFILE,
+    EntityChallengeConfig,
+    EntityChallengeSummary,
+    audit_entity_challenge_bundle,
+    write_entity_challenge_bundle,
+)
 from bitcoin_intel.benchmarking.scenarios import (
     DEFAULT_SCENARIO_PROPORTIONS,
     SCENARIO_NAMES,
@@ -24,18 +31,23 @@ from bitcoin_intel.benchmarking.synthetic import (
 __all__ = [
     "CHALLENGE_PROFILE",
     "DEFAULT_SCENARIO_PROPORTIONS",
+    "ENTITY_CHALLENGE_PROFILE",
     "INTENSITIES",
     "SCENARIO_NAMES",
     "ChallengeConfig",
     "ChallengeGenerationSummary",
+    "EntityChallengeConfig",
+    "EntityChallengeSummary",
     "ScenarioConfig",
     "ScenarioGenerationSummary",
     "SyntheticConfig",
     "SyntheticGenerationSummary",
     "audit_challenge_bundle",
+    "audit_entity_challenge_bundle",
     "synthetic_input_address",
     "synthetic_txid",
     "write_challenge_bundle",
+    "write_entity_challenge_bundle",
     "write_scenario_bundle",
     "write_synthetic_json",
 ]
