@@ -11,6 +11,9 @@ htmlcov/
 /apps/backend/dataset/
 /benchmarks/generated/
 /benchmarks/work/
+/experiments/
+/apps/backend/experiments/
+/resources/geoip/*.mmdb
 
 # Frontend
 node_modules/

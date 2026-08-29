@@ -8,6 +8,10 @@ from pathlib import Path
 
 from bitcoin_intel.analytics.cli import configure_analytics_parser, run_analytics_command
 from bitcoin_intel.analytics.dataset import AnalyticalDatasetError
+from bitcoin_intel.enrichment.cli import configure_enrichment_parser, run_enrichment_command
+from bitcoin_intel.enrichment.pipeline import EnrichmentBuildError
+from bitcoin_intel.enrichment.resources import GeoIPResourceError
+from bitcoin_intel.enrichment.validation import EnrichmentStoreError
 from bitcoin_intel.features.cli import configure_features_parser, run_features_command
 from bitcoin_intel.features.pipeline import FeatureBuildError
 from bitcoin_intel.features.validation import FeatureStoreError
@@ -17,6 +21,8 @@ from bitcoin_intel.graph.docker import GraphRebuildError
 from bitcoin_intel.graph.import_builder import GraphImportError
 from bitcoin_intel.ingestion.errors import IngestionFileError
 from bitcoin_intel.ingestion.pipeline import ingest_file
+from bitcoin_intel.ml.cli import configure_ml_parser, run_ml_command
+from bitcoin_intel.ml.models import MLExperimentError
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -28,8 +34,10 @@ def build_parser() -> argparse.ArgumentParser:
     ingest_parser.add_argument("--input", type=Path, required=True, help="source file path")
     ingest_parser.add_argument("--output", type=Path, required=True, help="new dataset directory")
     configure_analytics_parser(subparsers)
+    configure_enrichment_parser(subparsers)
     configure_graph_parser(subparsers)
     configure_features_parser(subparsers)
+    configure_ml_parser(subparsers)
     return parser
 
 
@@ -41,6 +49,19 @@ def main(arguments: Sequence[str] | None = None) -> int:
             return run_analytics_command(args)
         except (AnalyticalDatasetError, ValueError, OSError) as error:
             print(f"Analytics failed: {error}", file=sys.stderr)
+            return 1
+    if args.command == "enrichment":
+        try:
+            return run_enrichment_command(args)
+        except (
+            AnalyticalDatasetError,
+            EnrichmentBuildError,
+            EnrichmentStoreError,
+            GeoIPResourceError,
+            ValueError,
+            OSError,
+        ) as error:
+            print(f"Enrichment operation failed: {error}", file=sys.stderr)
             return 1
     if args.command == "graph":
         try:
@@ -66,6 +87,12 @@ def main(arguments: Sequence[str] | None = None) -> int:
             OSError,
         ) as error:
             print(f"Feature operation failed: {error}", file=sys.stderr)
+            return 1
+    if args.command == "ml":
+        try:
+            return run_ml_command(args)
+        except (MLExperimentError, ValueError, OSError) as error:
+            print(f"ML experiment failed: {error}", file=sys.stderr)
             return 1
     if args.command != "ingest":
         raise AssertionError("argparse accepted an unknown top-level command")

@@ -25,3 +25,11 @@
 - Never present full-history snapshot features as point-in-time-safe features.
 - Synthetic scenario truth must never enter canonical, graph, or feature inputs.
 - IP/address correlation is observational and never implies ownership or control.
+- Synthetic scenario labels are evaluation truth, not criminal labels.
+- ML preprocessing must be fit on training data only.
+- Random row splits are diagnostic, not sufficient for connected data.
+- Raw anomaly scores are not probabilities or risk scores.
+- Reported IP metadata and independently enriched IP metadata must never be conflated.
+- External enrichment must record provider, version/metadata, and resource-hash provenance.
+- IP geolocation is approximate and does not identify a person or device location.
+- Runtime enrichment must use explicitly supplied local resources and remain offline.

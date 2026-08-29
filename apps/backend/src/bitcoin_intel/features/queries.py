@@ -367,3 +367,95 @@ FEATURE_QUERIES = {
     "ip_features": IP_FEATURE_QUERY,
     "correlation_features": CORRELATION_FEATURE_QUERY,
 }
+
+TRANSACTION_FEATURE_QUERY_V2 = f"""
+WITH base_features AS ({TRANSACTION_FEATURE_QUERY}),
+endpoint_values AS (
+    SELECT txid, src_enriched_country_code AS country_code, src_enriched_asn AS asn
+    FROM enriched_observations
+    UNION ALL
+    SELECT txid, dst_enriched_country_code AS country_code, dst_enriched_asn AS asn
+    FROM enriched_observations
+),
+enrichment_diversity AS (
+    SELECT txid,
+           count(DISTINCT country_code)::BIGINT AS unique_enriched_country_count,
+           count(DISTINCT asn)::BIGINT AS unique_enriched_asn_count
+    FROM endpoint_values GROUP BY txid
+),
+pair_rates AS (
+    SELECT txid,
+           CAST(avg((src_enriched_country_code = dst_enriched_country_code)::INTEGER)
+               FILTER (WHERE src_enriched_country_code IS NOT NULL
+                       AND dst_enriched_country_code IS NOT NULL) AS DOUBLE)
+               AS source_destination_country_match_rate,
+           CAST(avg((src_enriched_asn = dst_enriched_asn)::INTEGER)
+               FILTER (WHERE src_enriched_asn IS NOT NULL AND dst_enriched_asn IS NOT NULL)
+               AS DOUBLE)
+               AS source_destination_asn_match_rate
+    FROM enriched_observations GROUP BY txid
+)
+SELECT b.*,
+       coalesce(d.unique_enriched_country_count, 0)::BIGINT
+           AS unique_enriched_country_count,
+       coalesce(d.unique_enriched_asn_count, 0)::BIGINT AS unique_enriched_asn_count,
+       p.source_destination_country_match_rate,
+       p.source_destination_asn_match_rate
+FROM base_features b
+LEFT JOIN enrichment_diversity d USING (txid)
+LEFT JOIN pair_rates p USING (txid)
+ORDER BY b.txid
+"""
+
+CORRELATION_FEATURE_QUERY_V2 = f"""
+WITH base_features AS ({CORRELATION_FEATURE_QUERY}),
+associated_endpoints AS (
+    SELECT a.address, o.observation_id,
+           o.src_enriched_country_code AS country_code, o.src_enriched_asn AS asn
+    FROM address_transactions a JOIN enriched_observations o USING (txid)
+    UNION ALL
+    SELECT a.address, o.observation_id,
+           o.dst_enriched_country_code AS country_code, o.dst_enriched_asn AS asn
+    FROM address_transactions a JOIN enriched_observations o USING (txid)
+),
+enrichment_diversity AS (
+    SELECT address,
+           count(DISTINCT country_code)::BIGINT AS associated_enriched_country_count,
+           count(DISTINCT asn)::BIGINT AS associated_enriched_asn_count
+    FROM associated_endpoints GROUP BY address
+),
+cross_endpoint_counts AS (
+    SELECT a.address,
+           count(DISTINCT o.observation_id) FILTER (
+               WHERE o.src_enriched_country_code IS NOT NULL
+                 AND o.dst_enriched_country_code IS NOT NULL
+                 AND o.src_enriched_country_code <> o.dst_enriched_country_code
+           )::BIGINT AS associated_cross_country_observation_count,
+           count(DISTINCT o.observation_id) FILTER (
+               WHERE o.src_enriched_asn IS NOT NULL AND o.dst_enriched_asn IS NOT NULL
+                 AND o.src_enriched_asn <> o.dst_enriched_asn
+           )::BIGINT AS associated_cross_asn_observation_count
+    FROM address_transactions a JOIN enriched_observations o USING (txid)
+    GROUP BY a.address
+)
+SELECT b.*,
+       coalesce(d.associated_enriched_country_count, 0)::BIGINT
+           AS associated_enriched_country_count,
+       coalesce(d.associated_enriched_asn_count, 0)::BIGINT
+           AS associated_enriched_asn_count,
+       coalesce(c.associated_cross_country_observation_count, 0)::BIGINT
+           AS associated_cross_country_observation_count,
+       coalesce(c.associated_cross_asn_observation_count, 0)::BIGINT
+           AS associated_cross_asn_observation_count
+FROM base_features b
+LEFT JOIN enrichment_diversity d USING (address)
+LEFT JOIN cross_endpoint_counts c USING (address)
+ORDER BY b.address
+"""
+
+FEATURE_QUERIES_V1 = FEATURE_QUERIES
+FEATURE_QUERIES_V2 = {
+    **FEATURE_QUERIES,
+    "transaction_features": TRANSACTION_FEATURE_QUERY_V2,
+    "correlation_features": CORRELATION_FEATURE_QUERY_V2,
+}

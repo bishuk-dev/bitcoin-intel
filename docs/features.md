@@ -1,4 +1,4 @@
-# Phase 4 Feature Contract
+# Feature Contract — Schema v1 and v2
 
 Phase 4 materializes deterministic measurements as derived Parquet. Canonical Parquet remains the
 source of truth; feature output can be deleted and rebuilt. Features are not risk, guilt, ownership,
@@ -17,8 +17,10 @@ ip_features/part-00000.parquet
 correlation_features/part-00000.parquet
 ```
 
-`feature_schema_version` is `1.0.0` and evolves independently from canonical schema `1.0.0` and
-graph schema `1.0.0`. The manifest records the canonical manifest SHA-256, all three schema
+Historical Phase 4 stores use `feature_schema_version` `1.0.0`. New Phase 6 builds use `2.0.0`
+because adding columns changes each Parquet table's exact schema contract. Feature versioning
+evolves independently from canonical schema `1.0.0`, graph schema `1.0.0`, and enrichment schema
+`1.0.0`. The manifest records the canonical manifest SHA-256, applicable schema
 versions, calculation and definition versions, normalized build configuration, table rows, byte
 sizes, and file hashes. `feature_dataset_id` hashes only semantic identity; operational `built_at`
 does not affect it.
@@ -31,10 +33,33 @@ semantics, nullability, and unit. Validation requires that registry to match the
 
 | Table | Key | Feature columns | Purpose |
 | --- | --- | ---: | --- |
-| `transaction_features` | `txid` | 35 | Value structure, endpoint diversity, observation time, entropy, and burst windows |
+| `transaction_features` | `txid` | 39 in v2 | Value structure, endpoint diversity, observation time, entropy, burst windows, and enriched endpoint behavior |
 | `address_features` | `address` | 26 | Role occurrences, transaction/value activity, co-transaction adjacency, time, and WCC size |
 | `ip_features` | `ip` | 24 | Endpoint roles, transactions, ports, reported metadata, time, entropy, and burst windows |
-| `correlation_features` | `address` | 11 | Address/network associations through transactions and explicit IP-reuse measurements |
+| `correlation_features` | `address` | 15 in v2 | Address/network associations, IP reuse, and enriched endpoint diversity |
+
+## Feature Schema v2 enrichment fields
+
+Feature v2 consumes only the normalized provider-neutral `ip_enrichment` Parquet contract. MMDB
+parsing and DB-IP-specific field handling do not exist in feature SQL. Static country, ASN,
+organization, network, and address-classification facts remain in `ip_enrichment` rather than being
+duplicated into `ip_features`.
+
+| Feature | Entity | Semantics |
+| --- | --- | --- |
+| `unique_enriched_country_count` | transaction | Distinct known countries across both endpoints of scoped observations |
+| `unique_enriched_asn_count` | transaction | Distinct known ASNs across both endpoints of scoped observations |
+| `source_destination_country_match_rate` | transaction | Equal-country pairs divided by observations where both endpoint countries are known; `NULL` without comparable pairs |
+| `source_destination_asn_match_rate` | transaction | Equal-ASN pairs divided by observations where both endpoint ASNs are known; `NULL` without comparable pairs |
+| `associated_enriched_country_count` | address | Distinct known endpoint countries through scoped transactions containing the address |
+| `associated_enriched_asn_count` | address | Distinct known endpoint ASNs through scoped transactions containing the address |
+| `associated_cross_country_observation_count` | address | Distinct associated observations with two known, differing endpoint countries |
+| `associated_cross_asn_observation_count` | address | Distinct associated observations with two known, differing endpoint ASNs |
+
+Endpoint comparisons are valid because enrichment joins explicit `src_ip` and `dst_ip` values.
+Canonical reported country/ASN metadata has ambiguous endpoint attribution and is therefore kept as
+separate v1-compatible counts, never compared with endpoint enrichment. A disagreement is not a
+risk or suspiciousness signal.
 
 Transaction `input_count` and `output_count` are the unambiguous fan-in and fan-out measurements;
 duplicate `fan_in`/`fan_out` aliases are intentionally omitted. Integer counts and satoshi sums use
@@ -116,17 +141,24 @@ canonical data without improving the reproducibility boundary.
 ## CLI and publication
 
 ```bash
-uv run bitcoin-intel features build --dataset ./dataset --output ./features
 uv run bitcoin-intel features build \
-  --dataset ./dataset --output ./features-at-t \
+  --dataset ./dataset --enrichment ./enrichment --output ./features
+uv run bitcoin-intel features build \
+  --dataset ./dataset --enrichment ./enrichment --output ./features-at-t \
   --cutoff 2026-01-01T12:00:00Z
-uv run bitcoin-intel features validate --features ./features --dataset ./dataset
+uv run bitcoin-intel features validate \
+  --features ./features --dataset ./dataset --enrichment ./enrichment
 ```
 
 A build first validates canonical integrity, writes into a sibling temporary directory, validates
 schemas, lineage, hashes, identities, constraints, references, and cutoff bounds, then atomically
 renames the directory. Existing output is never silently overwritten. No command accepts arbitrary
 SQL.
+
+The validator recognizes both schema `1.0.0` and `2.0.0`. A v2 build binds the enrichment dataset
+ID, schema version, and manifest SHA-256 into feature identity. Existing v1 stores remain readable
+by the Phase 5 loader and are never migrated or mutated; `build_features_v1` exists only as an
+explicit Python compatibility/reproducibility entry point. New CLI builds always produce v2.
 
 ## Scientific caveats
 

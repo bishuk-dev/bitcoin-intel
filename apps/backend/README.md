@@ -73,20 +73,54 @@ These are fixed, parameterized, bounded operations; there is no arbitrary Cypher
 [`../../docs/deployment/neo4j-offline.md`](../../docs/deployment/neo4j-offline.md) for credentials,
 the destructive rebuild workflow, and air-gapped image transfer.
 
-Phase 4 adds atomic, versioned feature Parquet builds. Snapshot mode uses the complete canonical
-dataset; cutoff mode filters by network observation time and does not claim block time:
+Phase 6 adds derived offline country/ASN enrichment and Feature Schema v2. Stage licensed DB-IP
+Lite MMDB resources locally; neither command downloads data:
 
 ```bash
-uv run bitcoin-intel features build --dataset ./dataset --output ./features
+uv run bitcoin-intel enrichment build \
+  --dataset ./dataset \
+  --country-db ../../resources/geoip/dbip-country-lite.mmdb \
+  --asn-db ../../resources/geoip/dbip-asn-lite.mmdb \
+  --output ./enrichment
+uv run bitcoin-intel enrichment validate --dataset ./dataset --enrichment ./enrichment
 uv run bitcoin-intel features build \
-  --dataset ./dataset --output ./features-at-t --cutoff 2026-01-01T12:00:00Z
-uv run bitcoin-intel features validate --features ./features --dataset ./dataset
+  --dataset ./dataset --enrichment ./enrichment --output ./features
+uv run bitcoin-intel features build \
+  --dataset ./dataset --enrichment ./enrichment \
+  --output ./features-at-t --cutoff 2026-01-01T12:00:00Z
+uv run bitcoin-intel features validate \
+  --features ./features --dataset ./dataset --enrichment ./enrichment
 ```
 
-Definitions, lineage, nulls, graph projection, and IP/address caveats are documented in
-[`../../docs/features.md`](../../docs/features.md). Generate connected, truth-isolated evaluation
-data with `scripts/generate_scenarios.py`; see
+Resource provenance, attribution, lookup nulls, and accuracy limitations are documented in
+[`../../docs/ip-enrichment.md`](../../docs/ip-enrichment.md). Feature definitions, lineage, nulls,
+graph projection, v1 compatibility, and v2 IP/address caveats are documented in
+[`../../docs/features.md`](../../docs/features.md). Generate connected, truth-isolated evaluation data with `scripts/generate_scenarios.py`; see
 [`../../docs/synthetic-scenarios.md`](../../docs/synthetic-scenarios.md).
+
+Phase 5 adds local transaction-level ML experiments. Synthetic truth is accepted only by this
+experiment/evaluation boundary and never enters feature Parquet:
+
+```bash
+uv run bitcoin-intel ml train-anomaly \
+  --features ./features --truth ./scenario-truth.json \
+  --model isolation-forest --split group --output ./experiments
+uv run bitcoin-intel ml train-anomaly \
+  --features ./features --truth ./scenario-truth.json \
+  --model local-outlier-factor --split group --output ./experiments
+uv run bitcoin-intel ml train-scenario \
+  --features ./features --truth ./scenario-truth.json \
+  --model logistic-regression --split group --output ./experiments
+uv run bitcoin-intel ml train-scenario \
+  --features ./features --truth ./scenario-truth.json \
+  --model random-forest --split group --output ./experiments
+uv run bitcoin-intel ml evaluate --experiment ./experiments/<experiment-id>
+```
+
+Feature families are `transaction-only`, `network-only`, and `all-eligible`. Generated experiment
+directories are ignored by Git. Treat joblib as trusted-local-only serialized code; the evaluation
+command never loads it. Full methodology and claim limits are in
+[`../../docs/ml-baselines.md`](../../docs/ml-baselines.md).
 
 Run the deterministic Phase 2 benchmark manually; it is deliberately excluded from pytest:
 
@@ -118,6 +152,25 @@ uv run python scripts/benchmark_phase4.py \
   --seed 42 \
   --output ../../benchmarks/results/phase-4-local.json \
   --work-directory ../../benchmarks/work/phase4-local
+```
+
+Run the Phase 5 ML and ablation benchmark with one fresh process per experiment:
+
+```bash
+uv run python scripts/benchmark_phase5.py \
+  --transactions 10000 \
+  --seed 42 \
+  --output ../../benchmarks/results/phase-5-local.json
+```
+
+Run the Phase 6 enrichment/Feature v2 benchmark without repeating older subsystem benchmarks:
+
+```bash
+uv run python scripts/benchmark_phase6.py \
+  --records 10000 100000 \
+  --seed 42 \
+  --output ../../benchmarks/results/phase-6-local.json \
+  --work-directory ../../benchmarks/work/phase6-local
 ```
 
 Verification commands:

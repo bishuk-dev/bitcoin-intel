@@ -32,6 +32,7 @@ _BASE_TIMESTAMP = datetime(2026, 1, 1, tzinfo=UTC)
 class ScenarioConfig:
     transaction_count: int
     seed: int = 42
+    group_size: int = 20
     scenario_proportions: tuple[tuple[str, float], ...] = DEFAULT_SCENARIO_PROPORTIONS
 
     def __post_init__(self) -> None:
@@ -39,6 +40,8 @@ class ScenarioConfig:
             raise ValueError("transaction_count must be positive")
         if self.seed < 0:
             raise ValueError("seed must be non-negative")
+        if self.group_size < 2:
+            raise ValueError("group_size must be at least 2")
         names = [name for name, _ in self.scenario_proportions]
         if len(names) != len(set(names)):
             raise ValueError("scenario proportions contain duplicate names")
@@ -107,16 +110,18 @@ def _build_transaction(
     txid = hashlib.sha256(
         f"phase-4-scenario:{config.seed}:tx:{transaction_index}".encode()
     ).hexdigest()
-    chain_input = f"scenario-chain-{config.seed}-{transaction_index}"
-    chain_output = f"scenario-chain-{config.seed}-{transaction_index + 1}"
+    group_index, group_position = divmod(transaction_index, config.group_size)
+    group_id = f"scenario-group-{config.seed}-{group_index}"
+    chain_input = f"{group_id}-chain-{group_position}"
+    chain_output = f"{group_id}-chain-{group_position + 1}"
     input_addresses = [chain_input]
     input_sats = [250_000_000 + generator.randrange(50_000_000)]
 
     if transaction_index % 3 == 0:
-        input_addresses.append(f"scenario-reused-input-{config.seed}-{transaction_index % 11}")
+        input_addresses.append(f"{group_id}-reused-input-{group_position % 3}")
         input_sats.append(100_000_000 + generator.randrange(25_000_000))
     if transaction_index % 7 == 0:
-        input_addresses.append(f"scenario-hub-{config.seed}")
+        input_addresses.append(f"{group_id}-hub")
         input_sats.append(75_000_000)
 
     output_count = 6 if scenario == "high_fan_out_pattern" else 2 + transaction_index % 2
@@ -155,14 +160,10 @@ def _build_transaction(
     observed_ips: list[tuple[str, str]] = []
     for observation_index in range(observation_count):
         if scenario == "shared_network_pattern":
-            src_ip = f"198.51.100.{1 + transaction_index % 4}"
+            src_ip = f"2001:db8:100:{group_index:x}::{1 + group_position % 4:x}"
         else:
-            src_ip = f"192.0.2.{1 + (transaction_index + observation_index * 17) % 254}"
-        dst_ip = (
-            f"2001:db8::{1 + (transaction_index * 7 + observation_index) % 65_534:x}"
-            if observation_index % 2
-            else f"203.0.113.{1 + (transaction_index * 5 + observation_index) % 254}"
-        )
+            src_ip = f"2001:db8:200:{group_index:x}::{1 + group_position * 8 + observation_index:x}"
+        dst_ip = f"2001:db8:300:{group_index:x}::{1 + group_position * 8 + observation_index:x}"
         offset = observation_index * (5 if scenario == "rapid_sequence_pattern" else 300)
         if observation_index == observation_count - 1 and transaction_index % 5 == 0:
             offset += 7 * 24 * 60 * 60
@@ -182,6 +183,7 @@ def _build_transaction(
     truth = {
         "txid": txid,
         "scenario_class": scenario,
+        "scenario_group_id": group_id,
         "structural_truth": {
             "input_count": len(input_addresses),
             "output_count": len(output_addresses),
@@ -203,13 +205,14 @@ def _write_bundle_files(
 ) -> int:
     truth_prefix = {
         "configuration": {
+            "group_size": config.group_size,
             "scenario_proportions": dict(sorted(config.scenario_proportions)),
             "seed": config.seed,
             "transaction_count": config.transaction_count,
         },
         "not_criminal_ground_truth": True,
         "purpose": "evaluation-only deterministic structural scenario truth",
-        "truth_schema_version": "1.0.0",
+        "truth_schema_version": "1.1.0",
     }
     observation_count = 0
     with (

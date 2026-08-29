@@ -1,4 +1,4 @@
-# Implemented Architecture Through Phase 4
+# Implemented Architecture Through Phase 6
 
 The repository is a monorepo with independently managed backend and frontend applications:
 
@@ -116,5 +116,46 @@ The connected scenario generator is separate from the infrastructure benchmark g
 evaluation truth sidecar is never passed into canonical ingestion, graph preparation, or features.
 See [`../features.md`](../features.md) and [`../synthetic-scenarios.md`](../synthetic-scenarios.md).
 
-GeoIP enrichment, entity resolution, machine learning, anomaly/risk scoring, alerts, graph HTTP
-endpoints, and dashboard visualization remain future-phase concerns and have no placeholders.
+Phase 5 adds an experiment-only consumer of transaction feature Parquet:
+
+```text
+Feature Parquet ───────────────▶ explicit numeric model matrix
+                                      │
+evaluation-only truth ─▶ group split/evaluation
+                                      │
+                                      ▼
+                         training-only sklearn Pipeline
+                                      │
+                                      ▼
+                    versioned local experiment artifacts
+```
+
+The truth join exists only after feature loading. IDs, timestamps, labels, and group metadata are
+excluded from predictors. Group-aware 70/15/15 is the measured default for connected scenarios;
+random stratification is explicitly diagnostic. Chronological splits validate ordering but do not
+turn a shared snapshot into rolling point-in-time features. Isolation Forest and novelty LOF expose
+one standardized score direction; Logistic Regression and Random Forest provide multiclass
+synthetic scenario baselines.
+
+Artifacts are semantic-content addressed and atomically published. JSON/Parquet inspection does
+not deserialize the model. Joblib loading requires an explicit local trust decision and an exact
+manifest hash match. See [`../ml-baselines.md`](../ml-baselines.md).
+
+Phase 6 adds a provider-isolated external-intelligence branch and a versioned feature integration:
+
+```text
+local DB-IP MMDB ─▶ maxminddb adapter ─▶ normalized ip_enrichment Parquet
+                                               │
+Canonical Parquet ─▶ cutoff-scoped DuckDB views┴─▶ Feature Schema v2 Parquet
+```
+
+Country and ASN readers are opened once per build. The immutable enrichment manifest binds the
+canonical manifest and both external resource hashes; its provider-neutral table is the only
+interface consumed by feature SQL. Canonical reported metadata remains unchanged and separate.
+Feature v2 adds endpoint-attributable diversity/match measurements and address correlation counts,
+while its validator and Phase 5 loader retain explicit support for historical v1 stores. Static IP
+lookup facts are not duplicated into feature tables. See [`../ip-enrichment.md`](../ip-enrichment.md)
+and [`../features.md`](../features.md).
+
+Entity resolution, production model selection/fusion, risk scoring, alerts, graph HTTP endpoints,
+and dashboard visualization remain future-phase concerns and have no placeholders.

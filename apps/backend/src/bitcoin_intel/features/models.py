@@ -6,7 +6,9 @@ from pathlib import Path
 
 import pyarrow as pa
 
-FEATURE_SCHEMA_VERSION = "1.0.0"
+FEATURE_SCHEMA_VERSION_V1 = "1.0.0"
+FEATURE_SCHEMA_VERSION = "2.0.0"
+SUPPORTED_FEATURE_SCHEMA_VERSIONS = frozenset({FEATURE_SCHEMA_VERSION_V1, FEATURE_SCHEMA_VERSION})
 FEATURE_CALCULATION_VERSION = "1"
 PART_FILE_NAME = "part-00000.parquet"
 MANIFEST_FILE_NAME = "feature-manifest.json"
@@ -68,7 +70,7 @@ def _field(name: str, dtype: pa.DataType, nullable: bool = False) -> pa.Field:
     return pa.field(name, dtype, nullable=nullable)
 
 
-TRANSACTION_FEATURES = FeatureTableDefinition(
+TRANSACTION_FEATURES_V1 = FeatureTableDefinition(
     key="txid",
     schema=pa.schema(
         [
@@ -111,7 +113,7 @@ TRANSACTION_FEATURES = FeatureTableDefinition(
     ),
 )
 
-ADDRESS_FEATURES = FeatureTableDefinition(
+ADDRESS_FEATURES_V1 = FeatureTableDefinition(
     key="address",
     schema=pa.schema(
         [
@@ -145,7 +147,7 @@ ADDRESS_FEATURES = FeatureTableDefinition(
     ),
 )
 
-IP_FEATURES = FeatureTableDefinition(
+IP_FEATURES_V1 = FeatureTableDefinition(
     key="ip",
     schema=pa.schema(
         [
@@ -177,7 +179,7 @@ IP_FEATURES = FeatureTableDefinition(
     ),
 )
 
-CORRELATION_FEATURES = FeatureTableDefinition(
+CORRELATION_FEATURES_V1 = FeatureTableDefinition(
     key="address",
     schema=pa.schema(
         [
@@ -196,9 +198,58 @@ CORRELATION_FEATURES = FeatureTableDefinition(
     ),
 )
 
-FEATURE_TABLES: dict[str, FeatureTableDefinition] = {
-    "transaction_features": TRANSACTION_FEATURES,
-    "address_features": ADDRESS_FEATURES,
-    "ip_features": IP_FEATURES,
-    "correlation_features": CORRELATION_FEATURES,
+FEATURE_TABLES_V1: dict[str, FeatureTableDefinition] = {
+    "transaction_features": TRANSACTION_FEATURES_V1,
+    "address_features": ADDRESS_FEATURES_V1,
+    "ip_features": IP_FEATURES_V1,
+    "correlation_features": CORRELATION_FEATURES_V1,
 }
+
+TRANSACTION_FEATURES_V2 = FeatureTableDefinition(
+    key="txid",
+    schema=pa.schema(
+        [
+            *TRANSACTION_FEATURES_V1.schema,
+            _field("unique_enriched_country_count", _I),
+            _field("unique_enriched_asn_count", _I),
+            _field("source_destination_country_match_rate", _F, True),
+            _field("source_destination_asn_match_rate", _F, True),
+        ]
+    ),
+)
+
+CORRELATION_FEATURES_V2 = FeatureTableDefinition(
+    key="address",
+    schema=pa.schema(
+        [
+            *CORRELATION_FEATURES_V1.schema,
+            _field("associated_enriched_country_count", _I),
+            _field("associated_enriched_asn_count", _I),
+            _field("associated_cross_country_observation_count", _I),
+            _field("associated_cross_asn_observation_count", _I),
+        ]
+    ),
+)
+
+FEATURE_TABLES_V2: dict[str, FeatureTableDefinition] = {
+    "transaction_features": TRANSACTION_FEATURES_V2,
+    "address_features": ADDRESS_FEATURES_V1,
+    "ip_features": IP_FEATURES_V1,
+    "correlation_features": CORRELATION_FEATURES_V2,
+}
+
+# Unversioned names describe the current build contract. Explicit v1 names remain available to
+# historical readers and tests so schema evolution cannot silently reinterpret old artifacts.
+FEATURE_TABLES = FEATURE_TABLES_V2
+TRANSACTION_FEATURES = TRANSACTION_FEATURES_V2
+ADDRESS_FEATURES = ADDRESS_FEATURES_V1
+IP_FEATURES = IP_FEATURES_V1
+CORRELATION_FEATURES = CORRELATION_FEATURES_V2
+
+
+def feature_tables_for_version(version: str) -> dict[str, FeatureTableDefinition]:
+    if version == FEATURE_SCHEMA_VERSION_V1:
+        return FEATURE_TABLES_V1
+    if version == FEATURE_SCHEMA_VERSION:
+        return FEATURE_TABLES_V2
+    raise ValueError(f"unsupported feature schema version: {version}")

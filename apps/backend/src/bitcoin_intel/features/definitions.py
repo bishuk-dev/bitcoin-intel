@@ -10,7 +10,7 @@ import pyarrow as pa
 from bitcoin_intel.features.models import (
     FEATURE_CALCULATION_VERSION,
     FEATURE_SCHEMA_VERSION,
-    FEATURE_TABLES,
+    feature_tables_for_version,
 )
 
 # Registry descriptions are intentionally complete scalar metadata; splitting every value would
@@ -104,6 +104,14 @@ _DESCRIPTIONS = {
     "max_transactions_per_associated_ip": "Maximum distinct containing transactions for one associated IP; NULL without associated IPs.",
     "mean_transactions_per_associated_ip": "Mean distinct containing transactions per associated IP; NULL without associated IPs.",
     "ip_reuse_ratio": "Reused associated IP count divided by distinct associated IP count; NULL without associated IPs.",
+    "unique_enriched_country_count": "Distinct endpoint-enriched countries on the transaction's scoped observations.",
+    "unique_enriched_asn_count": "Distinct endpoint-enriched ASNs on the transaction's scoped observations.",
+    "source_destination_country_match_rate": "Fraction of scoped observations with two known endpoint countries where source and destination match; NULL without comparable pairs.",
+    "source_destination_asn_match_rate": "Fraction of scoped observations with two known endpoint ASNs where source and destination match; NULL without comparable pairs.",
+    "associated_enriched_country_count": "Distinct endpoint-enriched countries associated through scoped transactions containing the address.",
+    "associated_enriched_asn_count": "Distinct endpoint-enriched ASNs associated through scoped transactions containing the address.",
+    "associated_cross_country_observation_count": "Distinct associated observations whose two known endpoint countries differ.",
+    "associated_cross_asn_observation_count": "Distinct associated observations whose two known endpoint ASNs differ.",
 }
 
 _NETWORK_PREFIXES = (
@@ -121,6 +129,10 @@ _NETWORK_PREFIXES = (
     "unique_dst_port",
     "unique_port",
     "unique_reported_",
+    "unique_enriched_",
+    "source_destination_",
+    "associated_enriched_",
+    "associated_cross_",
     "first_observed",
     "last_observed",
     "observation_span",
@@ -140,10 +152,14 @@ _NETWORK_PREFIXES = (
 )
 
 
-def build_definition_registry() -> dict[str, Any]:
+def build_definition_registry(schema_version: str = FEATURE_SCHEMA_VERSION) -> dict[str, Any]:
     features: list[dict[str, Any]] = []
-    for table_name, table in FEATURE_TABLES.items():
-        metadata = _TABLE_METADATA[table_name]
+    table_metadata = json.loads(json.dumps(_TABLE_METADATA))
+    if schema_version == FEATURE_SCHEMA_VERSION:
+        for name in ("transaction_features", "correlation_features"):
+            table_metadata[name]["source_tables"].append("ip_enrichment")
+    for table_name, table in feature_tables_for_version(schema_version).items():
+        metadata = table_metadata[table_name]
         for field in table.schema:
             temporal_semantics = _temporal_semantics(field.name)
             features.append(
@@ -161,19 +177,21 @@ def build_definition_registry() -> dict[str, Any]:
                 }
             )
     return {
-        "feature_schema_version": FEATURE_SCHEMA_VERSION,
+        "feature_schema_version": schema_version,
         "calculation_version": FEATURE_CALCULATION_VERSION,
-        "tables": _TABLE_METADATA,
+        "tables": table_metadata,
         "features": features,
     }
 
 
-def serialize_definition_registry() -> bytes:
-    return (json.dumps(build_definition_registry(), indent=2, sort_keys=True) + "\n").encode()
+def serialize_definition_registry(schema_version: str = FEATURE_SCHEMA_VERSION) -> bytes:
+    return (
+        json.dumps(build_definition_registry(schema_version), indent=2, sort_keys=True) + "\n"
+    ).encode()
 
 
-def definition_registry_sha256() -> str:
-    return hashlib.sha256(serialize_definition_registry()).hexdigest()
+def definition_registry_sha256(schema_version: str = FEATURE_SCHEMA_VERSION) -> str:
+    return hashlib.sha256(serialize_definition_registry(schema_version)).hexdigest()
 
 
 def _temporal_semantics(name: str) -> str:

@@ -15,6 +15,10 @@ import pyarrow.parquet as pq
 
 from bitcoin_intel.analytics import AnalyticalDataset
 from bitcoin_intel.analytics.validation import validate_analytical_dataset
+from bitcoin_intel.enrichment.models import MANIFEST_FILE_NAME as ENRICHMENT_MANIFEST_FILE_NAME
+from bitcoin_intel.enrichment.models import PART_FILE_NAME as ENRICHMENT_PART_FILE_NAME
+from bitcoin_intel.enrichment.models import TABLE_NAME as ENRICHMENT_TABLE_NAME
+from bitcoin_intel.enrichment.validation import validate_enrichment_store
 from bitcoin_intel.features.definitions import (
     definition_registry_sha256,
     serialize_definition_registry,
@@ -24,13 +28,14 @@ from bitcoin_intel.features.models import (
     DEFINITIONS_FILE_NAME,
     FEATURE_CALCULATION_VERSION,
     FEATURE_SCHEMA_VERSION,
-    FEATURE_TABLES,
+    FEATURE_SCHEMA_VERSION_V1,
     MANIFEST_FILE_NAME,
     PART_FILE_NAME,
     FeatureBuildConfig,
     FeatureBuildSummary,
+    feature_tables_for_version,
 )
-from bitcoin_intel.features.queries import FEATURE_QUERIES
+from bitcoin_intel.features.queries import FEATURE_QUERIES_V1, FEATURE_QUERIES_V2
 from bitcoin_intel.graph.constants import GRAPH_SCHEMA_VERSION
 
 _LOGGER = logging.getLogger(__name__)
@@ -44,7 +49,29 @@ class FeatureBuildError(RuntimeError):
 def build_features(
     dataset_path: Path,
     output_path: Path,
+    enrichment_path: Path,
     config: FeatureBuildConfig | None = None,
+) -> FeatureBuildSummary:
+    return _build_features(
+        dataset_path, output_path, FEATURE_SCHEMA_VERSION, enrichment_path, config
+    )
+
+
+def build_features_v1(
+    dataset_path: Path,
+    output_path: Path,
+    config: FeatureBuildConfig | None = None,
+) -> FeatureBuildSummary:
+    """Build the historical v1 contract for compatibility and reproducibility."""
+    return _build_features(dataset_path, output_path, FEATURE_SCHEMA_VERSION_V1, None, config)
+
+
+def _build_features(
+    dataset_path: Path,
+    output_path: Path,
+    schema_version: str,
+    enrichment_path: Path | None,
+    config: FeatureBuildConfig | None,
 ) -> FeatureBuildSummary:
     effective_config = config or FeatureBuildConfig()
     dataset = AnalyticalDataset(dataset_path)
@@ -52,6 +79,19 @@ def build_features(
     if not integrity.is_valid:
         codes = ", ".join(issue.code for issue in integrity.issues)
         raise FeatureBuildError(f"canonical dataset failed integrity validation: {codes}")
+    enrichment_root: Path | None = None
+    enrichment_manifest: dict[str, Any] | None = None
+    if schema_version == FEATURE_SCHEMA_VERSION:
+        if enrichment_path is None:
+            raise FeatureBuildError("Feature Schema v2 requires an enrichment store")
+        enrichment_report = validate_enrichment_store(enrichment_path, dataset.path)
+        if not enrichment_report.is_valid:
+            codes = ", ".join(issue.code for issue in enrichment_report.issues)
+            raise FeatureBuildError(f"enrichment store failed validation: {codes}")
+        enrichment_root = enrichment_path.expanduser().resolve(strict=True)
+        enrichment_manifest = json.loads(
+            (enrichment_root / ENRICHMENT_MANIFEST_FILE_NAME).read_text(encoding="utf-8")
+        )
 
     destination = output_path.expanduser().resolve(strict=False)
     if destination.exists():
@@ -63,15 +103,25 @@ def build_features(
     try:
         canonical_manifest_path = dataset.path / "manifest.json"
         canonical_manifest_sha256 = _sha256_file(canonical_manifest_path)
-        definitions_bytes = serialize_definition_registry()
+        definitions_bytes = serialize_definition_registry(schema_version)
         (staging / DEFINITIONS_FILE_NAME).write_bytes(definitions_bytes)
 
         table_metadata: dict[str, dict[str, Any]] = {}
         with dataset.connect() as connection:
+            if enrichment_root is not None:
+                connection.read_parquet(
+                    str(enrichment_root / ENRICHMENT_TABLE_NAME / ENRICHMENT_PART_FILE_NAME)
+                ).create_view(ENRICHMENT_TABLE_NAME)
             _register_scoped_views(connection, effective_config)
             component_sizes = build_component_size_table(connection)
             connection.register("graph_component_sizes", component_sizes)
-            for table_name, definition in FEATURE_TABLES.items():
+            feature_tables = feature_tables_for_version(schema_version)
+            feature_queries = (
+                FEATURE_QUERIES_V2
+                if schema_version == FEATURE_SCHEMA_VERSION
+                else FEATURE_QUERIES_V1
+            )
+            for table_name, definition in feature_tables.items():
                 table_path = staging / table_name / PART_FILE_NAME
                 table_path.parent.mkdir(parents=True, exist_ok=False)
                 parameters: list[object] | None = (
@@ -81,7 +131,7 @@ def build_features(
                 )
                 rows = _write_query(
                     connection,
-                    FEATURE_QUERIES[table_name],
+                    feature_queries[table_name],
                     parameters,
                     table_path,
                     definition.schema,
@@ -113,15 +163,27 @@ def build_features(
                 "persistence": "ephemeral",
             },
         }
-        semantic_identity = {
+        semantic_identity: dict[str, Any] = {
             "canonical_manifest_sha256": canonical_manifest_sha256,
             "canonical_schema_version": dataset.manifest.schema_version,
             "graph_schema_version": GRAPH_SCHEMA_VERSION,
-            "feature_schema_version": FEATURE_SCHEMA_VERSION,
+            "feature_schema_version": schema_version,
             "feature_calculation_version": FEATURE_CALCULATION_VERSION,
-            "feature_definitions_sha256": definition_registry_sha256(),
+            "feature_definitions_sha256": definition_registry_sha256(schema_version),
             "build_configuration": build_configuration,
         }
+        if enrichment_manifest is not None:
+            semantic_identity.update(
+                {
+                    "enrichment_dataset_id": enrichment_manifest["enrichment_dataset_id"],
+                    "enrichment_schema_version": enrichment_manifest["enrichment_schema_version"],
+                    "enrichment_manifest_sha256": _sha256_file(
+                        enrichment_root / ENRICHMENT_MANIFEST_FILE_NAME
+                    )
+                    if enrichment_root is not None
+                    else None,
+                }
+            )
         feature_dataset_id = _sha256_bytes(_canonical_json(semantic_identity))
         manifest = {
             "feature_dataset_id": feature_dataset_id,
@@ -133,9 +195,9 @@ def build_features(
 
         from bitcoin_intel.features.validation import validate_feature_store
 
-        report = validate_feature_store(staging, dataset.path)
-        if not report.is_valid:
-            details = "; ".join(f"{issue.code}={issue.count}" for issue in report.issues)
+        build_report = validate_feature_store(staging, dataset.path, enrichment_root)
+        if not build_report.is_valid:
+            details = "; ".join(f"{issue.code}={issue.count}" for issue in build_report.issues)
             raise FeatureBuildError(f"staged feature store failed validation: {details}")
         if destination.exists():
             raise FeatureBuildError(
@@ -228,6 +290,20 @@ def _register_scoped_views(
         FROM endpoints
         GROUP BY ip, observation_id, txid, observed_at"""
     )
+    if ENRICHMENT_TABLE_NAME in {
+        str(row[0]) for row in connection.execute("SHOW TABLES").fetchall()
+    }:
+        connection.execute(
+            """CREATE TEMP VIEW enriched_observations AS
+            SELECT o.*,
+                   src.enriched_country_code AS src_enriched_country_code,
+                   src.enriched_asn AS src_enriched_asn,
+                   dst.enriched_country_code AS dst_enriched_country_code,
+                   dst.enriched_asn AS dst_enriched_asn
+            FROM scoped_observations o
+            JOIN ip_enrichment src ON src.ip = o.src_ip
+            JOIN ip_enrichment dst ON dst.ip = o.dst_ip"""
+        )
 
 
 def _write_query(

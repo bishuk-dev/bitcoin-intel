@@ -20,7 +20,7 @@ import igraph
 import pyarrow
 
 from bitcoin_intel.benchmarking import SyntheticConfig, write_synthetic_json
-from bitcoin_intel.features import build_features
+from bitcoin_intel.features import build_features_v1
 from bitcoin_intel.ingestion import ingest_file
 
 _BENCHMARK_VERSION = "1.0"
@@ -145,7 +145,7 @@ def _worker_main(arguments: Sequence[str]) -> int:
     sampler.start()
     started = perf_counter()
     try:
-        summary = build_features(args.dataset, args.output)
+        summary = build_features_v1(args.dataset, args.output)
     finally:
         sampler.stop()
     elapsed = perf_counter() - started

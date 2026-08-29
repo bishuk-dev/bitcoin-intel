@@ -1,0 +1,102 @@
+{
+  "benchmark_version": "1.0",
+  "builds": [
+    {
+      "canonical_observations": 10000,
+      "canonical_preparation": {
+        "accepted_records": 10000,
+        "excluded_from_measured_workers": true,
+        "generated_records": 10000,
+        "unique_transactions": 8000
+      },
+      "distinct_ips": 5496,
+      "enrichment": {
+        "asn_matches": 4200,
+        "asn_misses": 1296,
+        "build_seconds": 5.151201700005913,
+        "country_matches": 4200,
+        "country_misses": 1296,
+        "enrichment_dataset_id": "e71f65f925b0d5de7d695f43129099504026567cac188c46cec1fc0bc0a1ace6",
+        "ipv4": 508,
+        "ipv6": 4988,
+        "lookups_per_second": 2133.8710149880912,
+        "output_bytes": 29121,
+        "peak_rss_bytes": 106606592,
+        "total_lookups": 10992
+      },
+      "feature_v2": {
+        "build_seconds": 9.158941900008358,
+        "feature_dataset_id": "28de623aef1e1f81cea8a2a477296eaed1afbf661a41d4292f068a8e545bac03",
+        "feature_rows_total": 77646,
+        "output_bytes": 2398478,
+        "peak_rss_bytes": 248340480,
+        "table_rows": {
+          "address_features": 32075,
+          "correlation_features": 32075,
+          "ip_features": 5496,
+          "transaction_features": 8000
+        }
+      },
+      "record_count": 10000
+    },
+    {
+      "canonical_observations": 100000,
+      "canonical_preparation": {
+        "accepted_records": 100000,
+        "excluded_from_measured_workers": true,
+        "generated_records": 100000,
+        "unique_transactions": 80000
+      },
+      "distinct_ips": 46470,
+      "enrichment": {
+        "asn_matches": 26059,
+        "asn_misses": 20411,
+        "build_seconds": 38.4594444000104,
+        "country_matches": 26059,
+        "country_misses": 20411,
+        "enrichment_dataset_id": "c74cbe4fab92fd81797133ef8663b5a2bd0132c7e0d30073906387b03ca12628",
+        "ipv4": 508,
+        "ipv6": 45962,
+        "lookups_per_second": 2416.57157168851,
+        "output_bytes": 221198,
+        "peak_rss_bytes": 170618880,
+        "total_lookups": 92940
+      },
+      "feature_v2": {
+        "build_seconds": 43.81095240000286,
+        "feature_dataset_id": "11052145c26c0afccf7ca0684d5233a897987200d6227e0edce08db90276680a",
+        "feature_rows_total": 766346,
+        "output_bytes": 23802195,
+        "peak_rss_bytes": 1121312768,
+        "table_rows": {
+          "address_features": 319938,
+          "correlation_features": 319938,
+          "ip_features": 46470,
+          "transaction_features": 80000
+        }
+      },
+      "record_count": 100000
+    }
+  ],
+  "configuration": {
+    "lookup_count_definition": "country plus ASN lookup for every distinct IP",
+    "memory_method": "fresh worker RSS sampled every 20 ms",
+    "mmdb_fixture": "purpose-built deterministic-shape benchmark resources",
+    "record_counts": [
+      10000,
+      100000
+    ],
+    "scope": "enrichment and Feature Schema v2 only",
+    "seed": 42,
+    "temporal_mode": "snapshot"
+  },
+  "environment": {
+    "duckdb_version": "1.5.5",
+    "logical_cpu_count": 4,
+    "maxminddb_version": "3.1.1",
+    "platform": "Windows-10-10.0.19045-SP0",
+    "processor": "Intel64 Family 6 Model 78 Stepping 3, GenuineIntel",
+    "pyarrow_version": "23.0.1",
+    "python_version": "3.13.9"
+  }
+}

@@ -21,11 +21,13 @@ def configure_features_parser(
     build = commands.add_parser("build", help="build a new atomic feature dataset")
     build.add_argument("--dataset", type=Path, required=True)
     build.add_argument("--output", type=Path, required=True)
+    build.add_argument("--enrichment", type=Path, required=True)
     build.add_argument("--cutoff", type=_datetime_argument)
     build.add_argument("--reused-ip-min-transactions", type=int, default=2)
     validate = commands.add_parser("validate", help="validate a feature dataset and lineage")
     validate.add_argument("--features", type=Path, required=True)
     validate.add_argument("--dataset", type=Path, required=True)
+    validate.add_argument("--enrichment", type=Path)
 
 
 def run_features_command(args: argparse.Namespace) -> int:
@@ -33,6 +35,7 @@ def run_features_command(args: argparse.Namespace) -> int:
         summary = build_features(
             args.dataset,
             args.output,
+            args.enrichment,
             FeatureBuildConfig(
                 cutoff=args.cutoff,
                 reused_ip_min_transactions=args.reused_ip_min_transactions,
@@ -41,7 +44,7 @@ def run_features_command(args: argparse.Namespace) -> int:
         print(json.dumps(asdict(summary), indent=2, sort_keys=True, default=_json_default))
         return 0
     if args.features_command == "validate":
-        report = validate_feature_store(args.features, args.dataset)
+        report = validate_feature_store(args.features, args.dataset, args.enrichment)
         print(
             json.dumps(
                 {"valid": report.is_valid, "issues": [asdict(issue) for issue in report.issues]},

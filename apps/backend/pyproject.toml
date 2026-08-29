@@ -17,6 +17,11 @@ dependencies = [
     "tzdata>=2025.2,<2027",
     "uvicorn[standard]>=0.35,<1",
     "igraph>=0.11,<2",
+    "joblib>=1.5,<2",
+    "maxminddb>=3.1,<4",
+    "scikit-learn>=1.7,<2",
+    "xgboost-cpu>=3.4,<3.5",
+    "lightgbm>=4.7,<4.8",
 ]
 
 [project.scripts]
@@ -28,6 +33,7 @@ dev = [
     "hypothesis>=6.138,<7",
     "httpx2>=2,<3",
     "mypy>=1.17,<2",
+    "mmdb-writer>=0.2,<0.3",
     "pytest>=8.4,<9",
     "pytest-cov>=6.2,<8",
     "ruff>=0.12,<1",
@@ -62,5 +68,16 @@ warn_unreachable = true
 show_error_codes = true
 
 [[tool.mypy.overrides]]
-module = ["igraph", "pyarrow", "pyarrow.*"]
+module = [
+    "igraph",
+    "joblib",
+    "maxminddb",
+    "maxminddb.*",
+    "mmdb_writer",
+    "netaddr",
+    "pyarrow",
+    "pyarrow.*",
+    "sklearn",
+    "sklearn.*",
+]
 ignore_missing_imports = true

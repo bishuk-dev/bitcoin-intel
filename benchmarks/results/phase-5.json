@@ -1,0 +1,659 @@
+{
+  "benchmark_version": "1.0",
+  "configuration": {
+    "feature_mode": "snapshot",
+    "group_size": 20,
+    "preparation": "scenario generation, ingestion, and features excluded",
+    "seed": 42,
+    "split_strategy": "group",
+    "transaction_counts": [
+      10000
+    ],
+    "worker_isolation": "one fresh process per experiment"
+  },
+  "dataset_preparation": [
+    {
+      "accepted_observations": 17984,
+      "excluded_from_ml_measurements": true,
+      "feature_dataset_id": "35a5762bd4b07c4b61b9f7ffa43b8e5195d569f83f9f608fab8cda7c303fe686",
+      "source_observations": 17984,
+      "transaction_count": 10000
+    }
+  ],
+  "environment": {
+    "joblib_version": "1.5.3",
+    "logical_cpu_count": 4,
+    "numpy_version": "2.5.2",
+    "platform": "Windows-10-10.0.19045-SP0",
+    "processor": "Intel64 Family 6 Model 78 Stepping 3, GenuineIntel",
+    "pyarrow_version": "23.0.1",
+    "python_version": "3.13.9",
+    "scikit_learn_version": "1.9.0"
+  },
+  "experiments": [
+    {
+      "artifact_size_bytes": 2081830,
+      "entity_type": "transaction",
+      "experiment_id": "33bc95e60c3bce75b84a7c6dcb9928fde4f2c04a90952583adf584ab20888053",
+      "experiment_type": "anomaly",
+      "feature_count": 30,
+      "feature_family": "all-eligible",
+      "inference_seconds": 0.4206140000023879,
+      "model": "isolation-forest",
+      "peak_rss_bytes": 230981632,
+      "primary_metric_name": "roc_auc",
+      "primary_metric_value": 0.8719370460048426,
+      "split_strategy": "group",
+      "test_metrics": {
+        "average_precision": 0.9060877556447868,
+        "comparison": "baseline_vs_injected_scenario",
+        "per_scenario": {
+          "high_fan_out_pattern": {
+            "average_precision_vs_baseline": 0.37508285543580555,
+            "roc_auc_vs_baseline": 0.7095480225988701,
+            "support": 210,
+            "top_k_capture": 0.32857142857142857
+          },
+          "high_value_pattern": {
+            "average_precision_vs_baseline": 0.974441309298207,
+            "roc_auc_vs_baseline": 0.9929624170965364,
+            "support": 230,
+            "top_k_capture": 1.0
+          },
+          "rapid_sequence_pattern": {
+            "average_precision_vs_baseline": 0.8028574357094671,
+            "roc_auc_vs_baseline": 0.9183891415185338,
+            "support": 246,
+            "top_k_capture": 1.0
+          },
+          "shared_network_pattern": {
+            "average_precision_vs_baseline": 0.6379905224991487,
+            "roc_auc_vs_baseline": 0.8488952784503632,
+            "support": 224,
+            "top_k_capture": 1.0
+          }
+        },
+        "roc_auc": 0.8719370460048426,
+        "score_direction": "higher_is_more_anomalous",
+        "score_distributions": {
+          "baseline": {
+            "count": 590,
+            "max": 0.6020433512977672,
+            "mean": 0.4432594280846518,
+            "median": 0.4241913816219257,
+            "min": 0.3895890797457014,
+            "p95": 0.538696053388868
+          },
+          "high_fan_out_pattern": {
+            "count": 210,
+            "max": 0.5853439925149484,
+            "mean": 0.4574151562456704,
+            "median": 0.441910225025003,
+            "min": 0.415948611567464,
+            "p95": 0.5499291799981628
+          },
+          "high_value_pattern": {
+            "count": 230,
+            "max": 0.6985621933431566,
+            "mean": 0.5983188467797744,
+            "median": 0.5867967216034257,
+            "min": 0.5431423745012577,
+            "p95": 0.6824207898812509
+          },
+          "rapid_sequence_pattern": {
+            "count": 246,
+            "max": 0.6631553648913694,
+            "mean": 0.5498673726862522,
+            "median": 0.5345725441762463,
+            "min": 0.4921419568274144,
+            "p95": 0.6337157652471762
+          },
+          "shared_network_pattern": {
+            "count": 224,
+            "max": 0.6416326011899913,
+            "mean": 0.523756941350745,
+            "median": 0.5031055325752378,
+            "min": 0.47133011935284325,
+            "p95": 0.6204773512213788
+          }
+        },
+        "top_k": 910,
+        "top_k_capture": 0.845054945054945
+      },
+      "training_seconds": 6.40242220001528,
+      "transaction_count": 10000
+    },
+    {
+      "artifact_size_bytes": 2898448,
+      "entity_type": "transaction",
+      "experiment_id": "7b98ecf4d3c342d7eef37beb2edb1fcd4a09944d0d0f80fee0eb4a6e73bf5f50",
+      "experiment_type": "anomaly",
+      "feature_count": 30,
+      "feature_family": "all-eligible",
+      "inference_seconds": 0.6739461999968626,
+      "model": "local-outlier-factor",
+      "peak_rss_bytes": 231256064,
+      "primary_metric_name": "roc_auc",
+      "primary_metric_value": 0.5460998323710189,
+      "split_strategy": "group",
+      "test_metrics": {
+        "average_precision": 0.6607820136282294,
+        "comparison": "baseline_vs_injected_scenario",
+        "per_scenario": {
+          "high_fan_out_pattern": {
+            "average_precision_vs_baseline": 0.32281576435608117,
+            "roc_auc_vs_baseline": 0.5573769168684423,
+            "support": 210,
+            "top_k_capture": 0.638095238095238
+          },
+          "high_value_pattern": {
+            "average_precision_vs_baseline": 0.3424386292535141,
+            "roc_auc_vs_baseline": 0.5516875460574797,
+            "support": 230,
+            "top_k_capture": 0.6391304347826087
+          },
+          "rapid_sequence_pattern": {
+            "average_precision_vs_baseline": 0.33168382420816944,
+            "roc_auc_vs_baseline": 0.5180722061457902,
+            "support": 246,
+            "top_k_capture": 0.6056910569105691
+          },
+          "shared_network_pattern": {
+            "average_precision_vs_baseline": 0.34948394918511855,
+            "roc_auc_vs_baseline": 0.5605705205811138,
+            "support": 224,
+            "top_k_capture": 0.6517857142857143
+          }
+        },
+        "roc_auc": 0.5460998323710189,
+        "score_direction": "higher_is_more_anomalous",
+        "score_distributions": {
+          "baseline": {
+            "count": 590,
+            "max": 2.8455543813448245,
+            "mean": 1.0453306462758274,
+            "median": 1.017903492206755,
+            "min": 0.9402717485761498,
+            "p95": 1.1838537211495976
+          },
+          "high_fan_out_pattern": {
+            "count": 210,
+            "max": 2.5000806995304496,
+            "mean": 1.0779717085275962,
+            "median": 1.0265546725725516,
+            "min": 0.9460844884036863,
+            "p95": 1.400325959296367
+          },
+          "high_value_pattern": {
+            "count": 230,
+            "max": 1.849489612342138,
+            "mean": 1.069642726772164,
+            "median": 1.0315813965274025,
+            "min": 0.9263214312795818,
+            "p95": 1.2992090652644732
+          },
+          "rapid_sequence_pattern": {
+            "count": 246,
+            "max": 2.270408752948982,
+            "mean": 1.0673235768923743,
+            "median": 1.0227280360874105,
+            "min": 0.9313069327611165,
+            "p95": 1.275877699101857
+          },
+          "shared_network_pattern": {
+            "count": 224,
+            "max": 2.4682466242369427,
+            "mean": 1.0905989954201705,
+            "median": 1.0334511584171169,
+            "min": 0.9430804716813939,
+            "p95": 1.2980036426582078
+          }
+        },
+        "top_k": 910,
+        "top_k_capture": 0.6329670329670329
+      },
+      "training_seconds": 2.0388840999803506,
+      "transaction_count": 10000
+    },
+    {
+      "artifact_size_bytes": 1565977,
+      "entity_type": "transaction",
+      "experiment_id": "3f947bd5e12acf194cd443922e9ecbc6732e71f903a3916d4bd2bb563124810b",
+      "experiment_type": "scenario",
+      "feature_count": 30,
+      "feature_family": "all-eligible",
+      "inference_seconds": 0.08343890000833198,
+      "model": "logistic-regression",
+      "peak_rss_bytes": 230715392,
+      "primary_metric_name": "macro_f1",
+      "primary_metric_value": 1.0,
+      "split_strategy": "group",
+      "test_metrics": {
+        "average_precision_macro": 1.0,
+        "balanced_accuracy": 1.0,
+        "classes": [
+          "baseline",
+          "high_fan_out_pattern",
+          "high_value_pattern",
+          "rapid_sequence_pattern",
+          "shared_network_pattern"
+        ],
+        "confusion_matrix": [
+          [
+            590,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            210,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            230,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            246,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            224
+          ]
+        ],
+        "macro_f1": 1.0,
+        "multiclass_brier_score": 1.9953277330346884e-06,
+        "per_class": {
+          "baseline": {
+            "average_precision": 1.0,
+            "f1": 1.0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "roc_auc_ovr": 1.0,
+            "support": 590
+          },
+          "high_fan_out_pattern": {
+            "average_precision": 0.9999999999999999,
+            "f1": 1.0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "roc_auc_ovr": 1.0,
+            "support": 210
+          },
+          "high_value_pattern": {
+            "average_precision": 0.9999999999999999,
+            "f1": 1.0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "roc_auc_ovr": 1.0,
+            "support": 230
+          },
+          "rapid_sequence_pattern": {
+            "average_precision": 1.0,
+            "f1": 1.0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "roc_auc_ovr": 1.0,
+            "support": 246
+          },
+          "shared_network_pattern": {
+            "average_precision": 1.0,
+            "f1": 1.0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "roc_auc_ovr": 1.0,
+            "support": 224
+          }
+        },
+        "roc_auc_ovr_macro": 1.0,
+        "weighted_f1": 1.0
+      },
+      "training_seconds": 0.3021034999983385,
+      "transaction_count": 10000
+    },
+    {
+      "artifact_size_bytes": 1233589,
+      "entity_type": "transaction",
+      "experiment_id": "737e76bae8b9f825099d77d9fe3b8be2f3fda31390df3d21fcfb46311c4c7401",
+      "experiment_type": "scenario",
+      "feature_count": 30,
+      "feature_family": "all-eligible",
+      "inference_seconds": 0.9349608999909833,
+      "model": "random-forest",
+      "peak_rss_bytes": 231018496,
+      "primary_metric_name": "macro_f1",
+      "primary_metric_value": 1.0,
+      "split_strategy": "group",
+      "test_metrics": {
+        "average_precision_macro": 1.0,
+        "balanced_accuracy": 1.0,
+        "classes": [
+          "baseline",
+          "high_fan_out_pattern",
+          "high_value_pattern",
+          "rapid_sequence_pattern",
+          "shared_network_pattern"
+        ],
+        "confusion_matrix": [
+          [
+            590,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            210,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            230,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            246,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            224
+          ]
+        ],
+        "macro_f1": 1.0,
+        "multiclass_brier_score": 9.766660244317762e-07,
+        "per_class": {
+          "baseline": {
+            "average_precision": 1.0,
+            "f1": 1.0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "roc_auc_ovr": 1.0,
+            "support": 590
+          },
+          "high_fan_out_pattern": {
+            "average_precision": 1.0,
+            "f1": 1.0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "roc_auc_ovr": 1.0,
+            "support": 210
+          },
+          "high_value_pattern": {
+            "average_precision": 1.0,
+            "f1": 1.0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "roc_auc_ovr": 1.0,
+            "support": 230
+          },
+          "rapid_sequence_pattern": {
+            "average_precision": 1.0,
+            "f1": 1.0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "roc_auc_ovr": 1.0,
+            "support": 246
+          },
+          "shared_network_pattern": {
+            "average_precision": 1.0,
+            "f1": 1.0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "roc_auc_ovr": 1.0,
+            "support": 224
+          }
+        },
+        "roc_auc_ovr_macro": 1.0,
+        "weighted_f1": 1.0
+      },
+      "training_seconds": 14.432749300001888,
+      "transaction_count": 10000
+    },
+    {
+      "artifact_size_bytes": 1558944,
+      "entity_type": "transaction",
+      "experiment_id": "6e05b6c2abeef6ceaf4ac8e8441582c5df43d8a69c21d445430873c113145823",
+      "experiment_type": "scenario",
+      "feature_count": 14,
+      "feature_family": "transaction-only",
+      "inference_seconds": 0.09106330000213347,
+      "model": "logistic-regression",
+      "peak_rss_bytes": 227708928,
+      "primary_metric_name": "macro_f1",
+      "primary_metric_value": 0.5667417658565796,
+      "split_strategy": "group",
+      "test_metrics": {
+        "average_precision_macro": 0.6037274450705911,
+        "balanced_accuracy": 0.6016328569460028,
+        "classes": [
+          "baseline",
+          "high_fan_out_pattern",
+          "high_value_pattern",
+          "rapid_sequence_pattern",
+          "shared_network_pattern"
+        ],
+        "confusion_matrix": [
+          [
+            93,
+            0,
+            0,
+            229,
+            268
+          ],
+          [
+            0,
+            210,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            230,
+            0,
+            0
+          ],
+          [
+            33,
+            0,
+            0,
+            106,
+            107
+          ],
+          [
+            43,
+            0,
+            0,
+            87,
+            94
+          ]
+        ],
+        "macro_f1": 0.5667417658565796,
+        "multiclass_brier_score": 0.4712595336546301,
+        "per_class": {
+          "baseline": {
+            "average_precision": 0.5464811587765892,
+            "f1": 0.2450592885375494,
+            "precision": 0.5502958579881657,
+            "recall": 0.1576271186440678,
+            "roc_auc_ovr": 0.7341627863661763,
+            "support": 590
+          },
+          "high_fan_out_pattern": {
+            "average_precision": 0.9999999999999999,
+            "f1": 1.0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "roc_auc_ovr": 1.0,
+            "support": 210
+          },
+          "high_value_pattern": {
+            "average_precision": 0.9999999999999999,
+            "f1": 1.0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "roc_auc_ovr": 1.0,
+            "support": 230
+          },
+          "rapid_sequence_pattern": {
+            "average_precision": 0.25909454445626195,
+            "f1": 0.31736526946107785,
+            "precision": 0.25118483412322273,
+            "recall": 0.43089430894308944,
+            "roc_auc_ovr": 0.6773220004927323,
+            "support": 246
+          },
+          "shared_network_pattern": {
+            "average_precision": 0.2130615221201041,
+            "f1": 0.2712842712842713,
+            "precision": 0.20042643923240938,
+            "recall": 0.41964285714285715,
+            "roc_auc_ovr": 0.673967196596507,
+            "support": 224
+          }
+        },
+        "roc_auc_ovr_macro": 0.8170903966910832,
+        "weighted_f1": 0.48228300886150405
+      },
+      "training_seconds": 0.8722517999995034,
+      "transaction_count": 10000
+    },
+    {
+      "artifact_size_bytes": 1113948,
+      "entity_type": "transaction",
+      "experiment_id": "eec0397fcfcd6506c34e862f9d452ddd57a97a6c4f3a2709f38a6b1321bede40",
+      "experiment_type": "scenario",
+      "feature_count": 16,
+      "feature_family": "network-only",
+      "inference_seconds": 0.07375419998425059,
+      "model": "logistic-regression",
+      "peak_rss_bytes": 227053568,
+      "primary_metric_name": "macro_f1",
+      "primary_metric_value": 0.5139195098849278,
+      "split_strategy": "group",
+      "test_metrics": {
+        "average_precision_macro": 0.6015873630032444,
+        "balanced_accuracy": 0.6131677018633541,
+        "classes": [
+          "baseline",
+          "high_fan_out_pattern",
+          "high_value_pattern",
+          "rapid_sequence_pattern",
+          "shared_network_pattern"
+        ],
+        "confusion_matrix": [
+          [
+            0,
+            469,
+            121,
+            0,
+            0
+          ],
+          [
+            0,
+            180,
+            30,
+            0,
+            0
+          ],
+          [
+            0,
+            182,
+            48,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            246,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            224
+          ]
+        ],
+        "macro_f1": 0.5139195098849278,
+        "multiclass_brier_score": 0.4574721089831405,
+        "per_class": {
+          "baseline": {
+            "average_precision": 0.5661102097886588,
+            "f1": 0.0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "roc_auc_ovr": 0.7515179735518719,
+            "support": 590
+          },
+          "high_fan_out_pattern": {
+            "average_precision": 0.21478892633075802,
+            "f1": 0.345821325648415,
+            "precision": 0.21660649819494585,
+            "recall": 0.8571428571428571,
+            "roc_auc_ovr": 0.7022702104097454,
+            "support": 210
+          },
+          "high_value_pattern": {
+            "average_precision": 0.2270376788968057,
+            "f1": 0.22377622377622378,
+            "precision": 0.24120603015075376,
+            "recall": 0.20869565217391303,
+            "roc_auc_ovr": 0.6913214652516261,
+            "support": 230
+          },
+          "rapid_sequence_pattern": {
+            "average_precision": 1.0,
+            "f1": 1.0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "roc_auc_ovr": 1.0,
+            "support": 246
+          },
+          "shared_network_pattern": {
+            "average_precision": 1.0,
+            "f1": 1.0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "roc_auc_ovr": 1.0,
+            "support": 224
+          }
+        },
+        "roc_auc_ovr_macro": 0.8290219298426486,
+        "weighted_f1": 0.3960606732364657
+      },
+      "training_seconds": 0.419165899977088,
+      "transaction_count": 10000
+    }
+  ]
+}

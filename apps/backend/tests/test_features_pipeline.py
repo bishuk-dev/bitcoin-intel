@@ -11,11 +11,15 @@ import pytest
 from bitcoin_intel.analytics import AnalyticalDataset
 from bitcoin_intel.features.definitions import build_definition_registry
 from bitcoin_intel.features.graph import build_component_size_table
-from bitcoin_intel.features.models import FEATURE_TABLES, FeatureBuildConfig
+from bitcoin_intel.features.models import (
+    FEATURE_SCHEMA_VERSION_V1,
+    FEATURE_TABLES_V1,
+    FeatureBuildConfig,
+)
 from bitcoin_intel.features.pipeline import (
     FeatureBuildError,
     _register_scoped_views,
-    build_features,
+    build_features_v1,
 )
 from bitcoin_intel.features.validation import validate_feature_store
 from tests.feature_fixtures import create_feature_dataset, read_feature_rows
@@ -24,7 +28,7 @@ from tests.feature_fixtures import create_feature_dataset, read_feature_rows
 def test_hand_calculated_features_prevent_multiplicative_joins(tmp_path: Path) -> None:
     dataset = create_feature_dataset(tmp_path)
     output = tmp_path / "features"
-    summary = build_features(dataset, output)
+    summary = build_features_v1(dataset, output)
 
     transactions = {row["txid"]: row for row in read_feature_rows(output, "transaction_features")}
     tx1 = transactions["1" * 64]
@@ -59,7 +63,7 @@ def test_hand_calculated_features_prevent_multiplicative_joins(tmp_path: Path) -
 def test_ip_roles_ipv4_ipv6_ports_and_null_intervals(tmp_path: Path) -> None:
     dataset = create_feature_dataset(tmp_path)
     output = tmp_path / "features"
-    build_features(dataset, output)
+    build_features_v1(dataset, output)
     ips = {row["ip"]: row for row in read_feature_rows(output, "ip_features")}
 
     shared = ips["192.0.2.10"]
@@ -76,7 +80,7 @@ def test_cutoff_excludes_future_observations_and_transactions(tmp_path: Path) ->
     dataset = create_feature_dataset(tmp_path)
     output = tmp_path / "cutoff-features"
     cutoff = datetime(2026, 1, 1, 12, 0, 10, tzinfo=UTC)
-    summary = build_features(dataset, output, FeatureBuildConfig(cutoff=cutoff))
+    summary = build_features_v1(dataset, output, FeatureBuildConfig(cutoff=cutoff))
 
     transactions = {row["txid"]: row for row in read_feature_rows(output, "transaction_features")}
     assert summary.temporal_mode == "cutoff"
@@ -123,7 +127,7 @@ def test_empty_input_output_and_singleton_statistics_are_well_defined(
     dataset = tmp_path / "dataset"
     ingest_file(source, dataset)
     output = tmp_path / "features"
-    build_features(dataset, output)
+    build_features_v1(dataset, output)
     rows = {row["txid"]: row for row in read_feature_rows(output, "transaction_features")}
     assert rows["4" * 64]["input_count"] == 0
     assert rows["4" * 64]["mean_input_sats"] is None
@@ -136,14 +140,14 @@ def test_rebuild_has_identical_semantic_identity_and_parquet_hashes(tmp_path: Pa
     dataset = create_feature_dataset(tmp_path)
     first = tmp_path / "first"
     second = tmp_path / "second"
-    build_features(dataset, first)
-    build_features(dataset, second)
+    build_features_v1(dataset, first)
+    build_features_v1(dataset, second)
     first_manifest = json.loads((first / "feature-manifest.json").read_text(encoding="utf-8"))
     second_manifest = json.loads((second / "feature-manifest.json").read_text(encoding="utf-8"))
 
     assert first_manifest["feature_dataset_id"] == second_manifest["feature_dataset_id"]
     assert first_manifest["output_tables"] == second_manifest["output_tables"]
-    for table_name in FEATURE_TABLES:
+    for table_name in FEATURE_TABLES_V1:
         assert pq.read_table(first / table_name / "part-00000.parquet").equals(
             pq.read_table(second / table_name / "part-00000.parquet")
         )
@@ -152,7 +156,7 @@ def test_rebuild_has_identical_semantic_identity_and_parquet_hashes(tmp_path: Pa
 def test_validation_detects_corrupt_feature_values(tmp_path: Path) -> None:
     dataset = create_feature_dataset(tmp_path)
     output = tmp_path / "features"
-    build_features(dataset, output)
+    build_features_v1(dataset, output)
     path = output / "transaction_features" / "part-00000.parquet"
     table = pq.read_table(path)
     fee_index = table.schema.get_field_index("fee_sats")
@@ -178,16 +182,16 @@ def test_existing_output_is_not_overwritten(tmp_path: Path) -> None:
     marker = output / "preserve.txt"
     marker.write_text("keep", encoding="utf-8")
     with pytest.raises(FeatureBuildError, match="will not be overwritten"):
-        build_features(dataset, output)
+        build_features_v1(dataset, output)
     assert marker.read_text(encoding="utf-8") == "keep"
 
 
 def test_definition_registry_matches_every_parquet_column() -> None:
-    registry = build_definition_registry()
+    registry = build_definition_registry(FEATURE_SCHEMA_VERSION_V1)
     defined = {(feature["table"], feature["name"]) for feature in registry["features"]}
     expected = {
         (table_name, field.name)
-        for table_name, table in FEATURE_TABLES.items()
+        for table_name, table in FEATURE_TABLES_V1.items()
         for field in table.schema
     }
     assert defined == expected

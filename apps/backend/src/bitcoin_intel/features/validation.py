@@ -10,16 +10,24 @@ import duckdb
 import pyarrow.parquet as pq
 
 from bitcoin_intel.analytics import AnalyticalDataset
+from bitcoin_intel.enrichment.models import (
+    ENRICHMENT_SCHEMA_VERSION,
+)
+from bitcoin_intel.enrichment.models import (
+    MANIFEST_FILE_NAME as ENRICHMENT_MANIFEST_FILE_NAME,
+)
+from bitcoin_intel.enrichment.validation import validate_enrichment_store
 from bitcoin_intel.features.definitions import definition_registry_sha256
 from bitcoin_intel.features.models import (
     DEFINITIONS_FILE_NAME,
     FEATURE_CALCULATION_VERSION,
     FEATURE_SCHEMA_VERSION,
-    FEATURE_TABLES,
     MANIFEST_FILE_NAME,
     PART_FILE_NAME,
+    SUPPORTED_FEATURE_SCHEMA_VERSIONS,
     FeatureValidationIssue,
     FeatureValidationReport,
+    feature_tables_for_version,
 )
 from bitcoin_intel.graph.constants import GRAPH_SCHEMA_VERSION
 
@@ -28,16 +36,21 @@ class FeatureStoreError(RuntimeError):
     """Raised when feature metadata cannot be interpreted safely."""
 
 
-def validate_feature_store(feature_path: Path, dataset_path: Path) -> FeatureValidationReport:
+def validate_feature_store(
+    feature_path: Path,
+    dataset_path: Path,
+    enrichment_path: Path | None = None,
+) -> FeatureValidationReport:
     root = _resolve_directory(feature_path)
     dataset = AnalyticalDataset(dataset_path)
     manifest = _load_manifest(root)
     issues: list[FeatureValidationIssue] = []
+    schema_version = manifest.get("feature_schema_version")
 
     _mismatch(
         issues,
         "FEATURE_SCHEMA_VERSION_MISMATCH",
-        manifest.get("feature_schema_version") != FEATURE_SCHEMA_VERSION,
+        schema_version not in SUPPORTED_FEATURE_SCHEMA_VERSIONS,
         "feature schema version is unsupported",
     )
     _mismatch(
@@ -64,18 +77,61 @@ def validate_feature_store(feature_path: Path, dataset_path: Path) -> FeatureVal
         manifest.get("canonical_manifest_sha256") != _sha256_file(dataset.path / "manifest.json"),
         "feature store was not derived from the supplied canonical manifest",
     )
-    semantic_identity = {
-        key: manifest.get(key)
-        for key in (
-            "canonical_manifest_sha256",
-            "canonical_schema_version",
-            "graph_schema_version",
-            "feature_schema_version",
-            "feature_calculation_version",
-            "feature_definitions_sha256",
-            "build_configuration",
+    if schema_version == FEATURE_SCHEMA_VERSION:
+        if enrichment_path is None:
+            raise FeatureStoreError("Feature Schema v2 validation requires --enrichment")
+        enrichment_report = validate_enrichment_store(enrichment_path, dataset.path)
+        if not enrichment_report.is_valid:
+            issues.append(
+                FeatureValidationIssue(
+                    "INVALID_ENRICHMENT_LINEAGE",
+                    len(enrichment_report.issues),
+                    "supplied enrichment store failed validation",
+                )
+            )
+        enrichment_root = enrichment_path.expanduser().resolve(strict=True)
+        enrichment_manifest_path = enrichment_root / ENRICHMENT_MANIFEST_FILE_NAME
+        try:
+            enrichment_manifest = json.loads(enrichment_manifest_path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
+            raise FeatureStoreError(f"enrichment manifest is unreadable: {error}") from error
+        _mismatch(
+            issues,
+            "ENRICHMENT_DATASET_ID_MISMATCH",
+            manifest.get("enrichment_dataset_id")
+            != enrichment_manifest.get("enrichment_dataset_id"),
+            "feature store references a different enrichment dataset",
         )
-    }
+        _mismatch(
+            issues,
+            "ENRICHMENT_SCHEMA_VERSION_MISMATCH",
+            manifest.get("enrichment_schema_version") != ENRICHMENT_SCHEMA_VERSION,
+            "feature store references an unsupported enrichment schema",
+        )
+        _mismatch(
+            issues,
+            "ENRICHMENT_MANIFEST_HASH_MISMATCH",
+            manifest.get("enrichment_manifest_sha256") != _sha256_file(enrichment_manifest_path),
+            "feature store enrichment manifest hash differs",
+        )
+    semantic_keys = [
+        "canonical_manifest_sha256",
+        "canonical_schema_version",
+        "graph_schema_version",
+        "feature_schema_version",
+        "feature_calculation_version",
+        "feature_definitions_sha256",
+        "build_configuration",
+    ]
+    if schema_version == FEATURE_SCHEMA_VERSION:
+        semantic_keys.extend(
+            [
+                "enrichment_dataset_id",
+                "enrichment_schema_version",
+                "enrichment_manifest_sha256",
+            ]
+        )
+    semantic_identity = {key: manifest.get(key) for key in semantic_keys}
     expected_dataset_id = hashlib.sha256(
         json.dumps(semantic_identity, separators=(",", ":"), sort_keys=True).encode()
     ).hexdigest()
@@ -85,23 +141,26 @@ def validate_feature_store(feature_path: Path, dataset_path: Path) -> FeatureVal
         manifest.get("feature_dataset_id") != expected_dataset_id,
         "feature dataset semantic identity is invalid",
     )
+    if schema_version not in SUPPORTED_FEATURE_SCHEMA_VERSIONS:
+        return FeatureValidationReport(tuple(issues))
     definitions_path = root / DEFINITIONS_FILE_NAME
     definitions_hash = _sha256_file(definitions_path) if definitions_path.is_file() else None
     _mismatch(
         issues,
         "FEATURE_DEFINITIONS_MISSING_OR_CHANGED",
-        definitions_hash != definition_registry_sha256()
+        definitions_hash != definition_registry_sha256(str(schema_version))
         or manifest.get("feature_definitions_sha256") != definitions_hash,
         "feature definitions are missing or do not match the declared registry",
     )
 
+    feature_tables = feature_tables_for_version(str(schema_version))
     raw_tables = manifest.get("output_tables")
-    if not isinstance(raw_tables, dict) or set(raw_tables) != set(FEATURE_TABLES):
+    if not isinstance(raw_tables, dict) or set(raw_tables) != set(feature_tables):
         raise FeatureStoreError("manifest output_tables does not match the feature table contract")
 
     valid_paths: dict[str, Path] = {}
     values_are_queryable = True
-    for table_name, definition in FEATURE_TABLES.items():
+    for table_name, definition in feature_tables.items():
         raw_table = raw_tables.get(table_name)
         if not isinstance(raw_table, dict):
             raise FeatureStoreError(f"manifest table entry is malformed: {table_name}")
@@ -148,8 +207,8 @@ def validate_feature_store(feature_path: Path, dataset_path: Path) -> FeatureVal
             f"{table_name} SHA-256 differs from the manifest",
         )
 
-    if len(valid_paths) == len(FEATURE_TABLES) and values_are_queryable:
-        _validate_values(valid_paths, dataset, manifest, issues)
+    if len(valid_paths) == len(feature_tables) and values_are_queryable:
+        _validate_values(valid_paths, dataset, manifest, feature_tables, issues)
     return FeatureValidationReport(tuple(issues))
 
 
@@ -157,6 +216,7 @@ def _validate_values(
     paths: dict[str, Path],
     dataset: AnalyticalDataset,
     manifest: dict[str, Any],
+    feature_tables: dict[str, Any],
     issues: list[FeatureValidationIssue],
 ) -> None:
     connection = duckdb.connect(database=":memory:")
@@ -224,7 +284,7 @@ def _validate_values(
         for code, sql, message in checks:
             _query_issue(connection, issues, code, sql, message)
 
-        for table_name, definition in FEATURE_TABLES.items():
+        for table_name, definition in feature_tables.items():
             nonnegative = [
                 field.name
                 for field in definition.schema
@@ -255,6 +315,19 @@ def _validate_values(
                     f'SELECT count(*) FROM "{table_name}" WHERE {predicate}',
                     f"{table_name} contains NaN or infinity",
                 )
+
+        if manifest.get("feature_schema_version") == FEATURE_SCHEMA_VERSION:
+            _query_issue(
+                connection,
+                issues,
+                "FEATURE_RATIO_OUT_OF_RANGE",
+                """SELECT count(*) FROM transaction_features WHERE
+                (source_destination_country_match_rate IS NOT NULL AND
+                 source_destination_country_match_rate NOT BETWEEN 0 AND 1) OR
+                (source_destination_asn_match_rate IS NOT NULL AND
+                 source_destination_asn_match_rate NOT BETWEEN 0 AND 1)""",
+                "endpoint match rates must be NULL or in the inclusive range [0, 1]",
+            )
 
         cutoff = _manifest_cutoff(manifest)
         if cutoff is not None:

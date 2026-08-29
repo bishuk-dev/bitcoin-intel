@@ -20,6 +20,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--transactions", type=int, required=True)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--group-size", type=int, default=20)
     parser.add_argument(
         "--scenario-proportion",
         action="append",
@@ -42,6 +43,7 @@ def main(arguments: Sequence[str] | None = None) -> int:
         ScenarioConfig(
             transaction_count=args.transactions,
             seed=args.seed,
+            group_size=args.group_size,
             scenario_proportions=proportions,
         ),
     )

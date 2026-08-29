@@ -25,9 +25,15 @@ SHA-256 hashes. The writer streams both arrays, so memory does not grow with all
 Use repeated `--scenario-proportion NAME=FRACTION` arguments to replace defaults; configured
 non-baseline proportions must sum to at most 1 and the remainder is baseline.
 
+Related structures are contained within deterministic groups (20 transactions by default). Use
+`--group-size` to change that contract. Address chains restart for each group, and reused inputs,
+hubs, and endpoint pools include the group identity so they cannot connect different groups. The
+truth sidecar records `scenario_group_id`; source records do not. This supports group-aware ML
+splits without turning generator metadata into a predictor.
+
 ## Structural variety
 
-All generated transactions form address chains. Deterministic index patterns additionally create
+Transactions form address chains within their scenario groups. Deterministic index patterns also create
 reused input addresses, a hub-like address, multi-input and multi-output transactions, occasional
 input/output self-appearance, repeated observations, changing endpoints, IPv4 and IPv6 endpoints,
 shared IPs, bursty timestamps, and observations separated by seven days.

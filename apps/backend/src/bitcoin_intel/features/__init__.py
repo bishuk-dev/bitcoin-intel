@@ -4,7 +4,7 @@ from bitcoin_intel.features.models import (
     FeatureBuildSummary,
     FeatureValidationReport,
 )
-from bitcoin_intel.features.pipeline import build_features
+from bitcoin_intel.features.pipeline import build_features, build_features_v1
 from bitcoin_intel.features.validation import validate_feature_store
 
 __all__ = [
@@ -13,5 +13,6 @@ __all__ = [
     "FeatureBuildSummary",
     "FeatureValidationReport",
     "build_features",
+    "build_features_v1",
     "validate_feature_store",
 ]

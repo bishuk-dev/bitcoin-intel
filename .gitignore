@@ -11,8 +11,11 @@ htmlcov/
 /apps/backend/dataset/
 /benchmarks/generated/
 /benchmarks/work/
+/experiments/
+/apps/backend/experiments/
 graph-import*/
 /offline/neo4j/
+/resources/geoip/*.mmdb
 
 # Frontend
 node_modules/
