@@ -1,4 +1,4 @@
-# Implemented Architecture Through Phase 6
+# Implemented Architecture Through Phase 7
 
 The repository is a monorepo with independently managed backend and frontend applications:
 
@@ -157,5 +157,24 @@ while its validator and Phase 5 loader retain explicit support for historical v1
 lookup facts are not duplicated into feature tables. See [`../ip-enrichment.md`](../ip-enrichment.md)
 and [`../features.md`](../features.md).
 
-Entity resolution, production model selection/fusion, risk scoring, alerts, graph HTTP endpoints,
+Phase 7 extends the same experiment boundary; it does not introduce a second framework:
+
+```text
+challenge-v1 source ─▶ canonical/enrichment ─▶ Feature v2
+                                                   │
+evaluation-only truth ─▶ group split ──────────────┤
+                                                   ▼
+ validation-only screen/tuning ─▶ final candidates ─▶ content-addressed artifacts
+                                                   │
+                                                   ▼
+                                         model-selection.json
+```
+
+The original generator and Feature v1 remain readable. Phase 7 adds three supervised contenders,
+PCA reconstruction error, calibration diagnostics, five-seed stability, and explicit feature
+families to the existing artifact contract. Selection points to existing experiment IDs rather
+than copying model binaries. Model probabilities and anomaly scores remain experimental signals,
+not risk. See [`../ml-model-selection.md`](../ml-model-selection.md).
+
+Entity resolution, production risk integration/model fusion, risk scoring, alerts, graph HTTP endpoints,
 and dashboard visualization remain future-phase concerns and have no placeholders.

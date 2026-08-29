@@ -6,9 +6,15 @@ from collections.abc import Sequence
 from dataclasses import asdict
 from pathlib import Path
 
+from bitcoin_intel.benchmarking.challenge import (
+    ChallengeConfig,
+    ChallengeGenerationSummary,
+    write_challenge_bundle,
+)
 from bitcoin_intel.benchmarking.scenarios import (
     DEFAULT_SCENARIO_PROPORTIONS,
     ScenarioConfig,
+    ScenarioGenerationSummary,
     write_scenario_bundle,
 )
 
@@ -21,6 +27,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--transactions", type=int, required=True)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--group-size", type=int, default=20)
+    parser.add_argument(
+        "--profile",
+        choices=("historical", "challenge-v1"),
+        default="historical",
+        help="preserve the historical generator by default; opt into Phase 7 challenge-v1",
+    )
     parser.add_argument(
         "--scenario-proportion",
         action="append",
@@ -38,15 +50,28 @@ def main(arguments: Sequence[str] | None = None) -> int:
         if args.scenario_proportion
         else DEFAULT_SCENARIO_PROPORTIONS
     )
-    summary = write_scenario_bundle(
-        args.output,
-        ScenarioConfig(
-            transaction_count=args.transactions,
-            seed=args.seed,
-            group_size=args.group_size,
-            scenario_proportions=proportions,
-        ),
-    )
+    summary: ChallengeGenerationSummary | ScenarioGenerationSummary
+    if args.profile == "challenge-v1":
+        if args.scenario_proportion:
+            raise SystemExit("challenge-v1 uses fixed versioned proportions")
+        summary = write_challenge_bundle(
+            args.output,
+            ChallengeConfig(
+                transaction_count=args.transactions,
+                seed=args.seed,
+                group_size=args.group_size,
+            ),
+        )
+    else:
+        summary = write_scenario_bundle(
+            args.output,
+            ScenarioConfig(
+                transaction_count=args.transactions,
+                seed=args.seed,
+                group_size=args.group_size,
+                scenario_proportions=proportions,
+            ),
+        )
     print(json.dumps(asdict(summary), indent=2, sort_keys=True, default=str))
     return 0
 

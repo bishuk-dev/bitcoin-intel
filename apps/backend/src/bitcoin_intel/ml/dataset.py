@@ -13,12 +13,14 @@ import pyarrow.parquet as pq
 
 from bitcoin_intel.benchmarking.scenarios import SCENARIO_NAMES
 from bitcoin_intel.features.models import (
+    FEATURE_SCHEMA_VERSION_V1,
     MANIFEST_FILE_NAME,
     PART_FILE_NAME,
     SUPPORTED_FEATURE_SCHEMA_VERSIONS,
     feature_tables_for_version,
 )
 from bitcoin_intel.ml.models import (
+    ENRICHMENT_FEATURES,
     ENTITY_ID_COLUMN,
     FEATURE_FAMILIES,
     TIME_COLUMN,
@@ -48,6 +50,8 @@ class LoadedExperimentDataset:
     feature_columns: tuple[str, ...]
     labels: np.ndarray[Any, np.dtype[np.str_]] | None
     groups: np.ndarray[Any, np.dtype[np.str_]] | None
+    intensities: np.ndarray[Any, np.dtype[np.str_]] | None
+    secondary_tags: tuple[tuple[str, ...], ...] | None
     feature_manifest: dict[str, Any]
     truth_metadata: dict[str, Any] | None
 
@@ -59,6 +63,12 @@ def load_experiment_dataset(
 ) -> LoadedExperimentDataset:
     root, manifest = _load_feature_manifest(feature_path)
     columns = FEATURE_FAMILIES[feature_family]
+    if manifest["feature_schema_version"] == FEATURE_SCHEMA_VERSION_V1:
+        if feature_family in {"transaction-network-enrichment", "cross-layer"}:
+            raise MLExperimentError(
+                f"feature family {feature_family!r} requires Feature Schema v2 enrichment columns"
+            )
+        columns = tuple(name for name in columns if name not in ENRICHMENT_FEATURES)
     audit_feature_columns(columns)
     table_path = root / "transaction_features" / PART_FILE_NAME
     _verify_feature_table(table_path, manifest)
@@ -81,8 +91,12 @@ def load_experiment_dataset(
     labels: np.ndarray[Any, np.dtype[np.str_]] | None = None
     groups: np.ndarray[Any, np.dtype[np.str_]] | None = None
     truth_metadata: dict[str, Any] | None = None
+    intensities: np.ndarray[Any, np.dtype[np.str_]] | None = None
+    secondary_tags: tuple[tuple[str, ...], ...] | None = None
     if truth_path is not None:
-        labels, groups, truth_metadata = _load_and_join_truth(truth_path, entity_ids)
+        labels, groups, intensities, secondary_tags, truth_metadata = _load_and_join_truth(
+            truth_path, entity_ids
+        )
     return LoadedExperimentDataset(
         entity_ids=entity_ids,
         values=values,
@@ -90,6 +104,8 @@ def load_experiment_dataset(
         feature_columns=columns,
         labels=labels,
         groups=groups,
+        intensities=intensities,
+        secondary_tags=secondary_tags,
         feature_manifest=manifest,
         truth_metadata=truth_metadata,
     )
@@ -171,6 +187,8 @@ def _load_and_join_truth(
 ) -> tuple[
     np.ndarray[Any, np.dtype[np.str_]],
     np.ndarray[Any, np.dtype[np.str_]],
+    np.ndarray[Any, np.dtype[np.str_]] | None,
+    tuple[tuple[str, ...], ...] | None,
     dict[str, Any],
 ]:
     try:
@@ -178,14 +196,17 @@ def _load_and_join_truth(
         document = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
         raise MLExperimentError(f"scenario truth is unreadable or malformed: {error}") from error
-    if not isinstance(document, dict) or document.get("truth_schema_version") != "1.1.0":
+    if not isinstance(document, dict) or document.get("truth_schema_version") not in {
+        "1.1.0",
+        "1.2.0",
+    }:
         raise MLExperimentError("scenario truth schema version is unsupported")
     if document.get("not_criminal_ground_truth") is not True:
         raise MLExperimentError("scenario truth must declare its non-criminal semantics")
     raw_rows = document.get("transactions")
     if not isinstance(raw_rows, list):
         raise MLExperimentError("scenario truth transactions must be a list")
-    by_id: dict[str, tuple[str, str]] = {}
+    by_id: dict[str, tuple[str, str, str, tuple[str, ...]]] = {}
     for raw in raw_rows:
         if not isinstance(raw, dict):
             raise MLExperimentError("scenario truth contains a malformed transaction")
@@ -198,7 +219,18 @@ def _load_and_join_truth(
             raise MLExperimentError(f"scenario truth contains an unsupported class: {label!r}")
         if txid in by_id:
             raise MLExperimentError(f"scenario truth contains duplicate TXID: {txid}")
-        by_id[txid] = (str(label), group)
+        intensity = raw.get("scenario_intensity", "not_available")
+        secondary = raw.get("secondary_tags", [])
+        if (
+            not isinstance(intensity, str)
+            or not isinstance(secondary, list)
+            or not all(
+                isinstance(value, str) and value in SCENARIO_NAMES and value != "baseline"
+                for value in secondary
+            )
+        ):
+            raise MLExperimentError("scenario truth challenge metadata is malformed")
+        by_id[txid] = (str(label), group, intensity, tuple(secondary))
     missing = [txid for txid in entity_ids.tolist() if txid not in by_id]
     if missing:
         raise MLExperimentError(
@@ -206,14 +238,26 @@ def _load_and_join_truth(
         )
     labels = np.asarray([by_id[txid][0] for txid in entity_ids.tolist()], dtype=np.str_)
     groups = np.asarray([by_id[txid][1] for txid in entity_ids.tolist()], dtype=np.str_)
+    is_challenge = document["truth_schema_version"] == "1.2.0"
+    intensities = (
+        np.asarray([by_id[txid][2] for txid in entity_ids.tolist()], dtype=np.str_)
+        if is_challenge
+        else None
+    )
+    secondary_tags = tuple(by_id[txid][3] for txid in entity_ids.tolist()) if is_challenge else None
     metadata = {
         "path_sha256": _sha256_file(path),
         "truth_schema_version": document["truth_schema_version"],
         "purpose": document.get("purpose"),
         "not_criminal_ground_truth": True,
         "configuration": document.get("configuration"),
+        "challenge_profile": (
+            document.get("configuration", {}).get("profile")
+            if isinstance(document.get("configuration"), dict)
+            else None
+        ),
     }
-    return labels, groups, metadata
+    return labels, groups, intensities, secondary_tags, metadata
 
 
 def _sha256_file(path: Path) -> str:

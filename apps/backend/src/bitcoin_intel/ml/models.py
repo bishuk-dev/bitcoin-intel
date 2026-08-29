@@ -31,6 +31,8 @@ NETWORK_FEATURES = (
     "unique_ip_count",
     "unique_reported_asn_count",
     "unique_reported_country_count",
+)
+TEMPORAL_FEATURES = (
     "observation_span_seconds",
     "mean_inter_observation_seconds",
     "median_inter_observation_seconds",
@@ -44,16 +46,38 @@ NETWORK_FEATURES = (
     "max_observations_5m",
     "max_observations_1h",
 )
+ENRICHMENT_FEATURES = (
+    "unique_enriched_country_count",
+    "unique_enriched_asn_count",
+    "source_destination_country_match_rate",
+    "source_destination_asn_match_rate",
+)
 FEATURE_FAMILIES = {
     "transaction-only": TRANSACTION_FEATURES,
-    "network-only": NETWORK_FEATURES,
-    "all-eligible": TRANSACTION_FEATURES + NETWORK_FEATURES,
+    "network-only": NETWORK_FEATURES + TEMPORAL_FEATURES,
+    "transaction-temporal": TRANSACTION_FEATURES + TEMPORAL_FEATURES,
+    "transaction-network": TRANSACTION_FEATURES + NETWORK_FEATURES,
+    "transaction-network-enrichment": (
+        TRANSACTION_FEATURES + NETWORK_FEATURES + ENRICHMENT_FEATURES
+    ),
+    "cross-layer": TRANSACTION_FEATURES + NETWORK_FEATURES + ENRICHMENT_FEATURES,
+    "all-eligible": (
+        TRANSACTION_FEATURES + TEMPORAL_FEATURES + NETWORK_FEATURES + ENRICHMENT_FEATURES
+    ),
 }
 EXPERIMENT_MODELS = {
-    "anomaly": ("isolation-forest", "local-outlier-factor"),
-    "scenario": ("logistic-regression", "random-forest"),
+    "anomaly": ("isolation-forest", "local-outlier-factor", "pca-reconstruction"),
+    "scenario": (
+        "logistic-regression",
+        "random-forest",
+        "hist-gradient-boosting",
+        "xgboost",
+        "lightgbm",
+    ),
 }
 SPLIT_STRATEGIES = ("random-stratified", "group", "temporal")
+CALIBRATION_METHODS = ("none", "sigmoid")
+ParameterValue = bool | int | float | str | None
 
 
 class MLExperimentError(RuntimeError):
@@ -71,6 +95,8 @@ class ExperimentConfig:
     feature_family: str = "all-eligible"
     split_strategy: str = "group"
     seed: int = 42
+    calibration: str = "none"
+    parameter_overrides: tuple[tuple[str, ParameterValue], ...] = ()
 
     def __post_init__(self) -> None:
         if self.experiment_type not in EXPERIMENT_MODELS:
@@ -82,14 +108,18 @@ class ExperimentConfig:
         if self.entity_type != ENTITY_TYPE:
             raise ValueError("Phase 5 supports transaction experiments only")
         if self.feature_family not in FEATURE_FAMILIES:
-            raise ValueError(
-                "unsupported transaction feature family; choose transaction-only, "
-                "network-only, or all-eligible"
-            )
+            raise ValueError(f"unsupported transaction feature family: {self.feature_family}")
         if self.split_strategy not in SPLIT_STRATEGIES:
             raise ValueError(f"unsupported split strategy: {self.split_strategy}")
         if self.seed < 0:
             raise ValueError("seed must be non-negative")
+        if self.calibration not in CALIBRATION_METHODS:
+            raise ValueError(f"unsupported calibration method: {self.calibration}")
+        if self.experiment_type != "scenario" and self.calibration != "none":
+            raise ValueError("probability calibration applies to scenario classifiers only")
+        names = [name for name, _ in self.parameter_overrides]
+        if len(names) != len(set(names)):
+            raise ValueError("model parameter overrides contain duplicate names")
         if self.experiment_type == "scenario" and self.truth_path is None:
             raise ValueError("scenario experiments require an evaluation truth sidecar")
         if self.split_strategy == "group" and self.truth_path is None:

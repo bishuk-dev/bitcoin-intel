@@ -33,3 +33,6 @@
 - External enrichment must record provider, version/metadata, and resource-hash provenance.
 - IP geolocation is approximate and does not identify a person or device location.
 - Runtime enrichment must use explicitly supplied local resources and remain offline.
+- Model selection must use leakage-safe challenge evaluation, not the easy Phase 5 scenario set.
+- Perfect synthetic performance requires a generator and leakage audit.
+- Model probability and anomaly score are not investigative risk.

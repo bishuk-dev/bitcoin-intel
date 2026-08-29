@@ -117,10 +117,17 @@ uv run bitcoin-intel ml train-scenario \
 uv run bitcoin-intel ml evaluate --experiment ./experiments/<experiment-id>
 ```
 
-Feature families are `transaction-only`, `network-only`, and `all-eligible`. Generated experiment
+Feature families include `transaction-only`, `transaction-temporal`, `transaction-network`,
+`transaction-network-enrichment`, `cross-layer`, `network-only`, and `all-eligible`. Phase 7 also
+supports `hist-gradient-boosting`, `xgboost`, `lightgbm`, and `pca-reconstruction`; optional
+`--calibration sigmoid` is training-only. Generated experiment
 directories are ignored by Git. Treat joblib as trusted-local-only serialized code; the evaluation
 command never loads it. Full methodology and claim limits are in
-[`../../docs/ml-baselines.md`](../../docs/ml-baselines.md).
+[`../../docs/ml-baselines.md`](../../docs/ml-baselines.md) and
+[`../../docs/ml-model-selection.md`](../../docs/ml-model-selection.md).
+
+The production image installs Debian `libgomp1`, the minimal OpenMP runtime required by the
+LightGBM CPU wheel. It does not include CUDA or other GPU runtime packages.
 
 Run the deterministic Phase 2 benchmark manually; it is deliberately excluded from pytest:
 
@@ -171,6 +178,17 @@ uv run python scripts/benchmark_phase6.py \
   --seed 42 \
   --output ../../benchmarks/results/phase-6-local.json \
   --work-directory ../../benchmarks/work/phase6-local
+```
+
+Run the Phase 7 challenge/model-selection benchmark. The retained work directory is ignored and
+holds trusted local artifacts for offline verification:
+
+```bash
+uv run python scripts/benchmark_phase7.py \
+  --transactions 20000 \
+  --output ../../benchmarks/results/phase-7-local.json \
+  --selection-output ../../benchmarks/results/model-selection-local.json \
+  --work-directory ../../benchmarks/work/phase7-local --keep-data
 ```
 
 Verification commands:

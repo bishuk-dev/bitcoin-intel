@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from typing import Any
 
 import numpy as np
@@ -7,6 +8,7 @@ from sklearn.metrics import (
     average_precision_score,
     balanced_accuracy_score,
     confusion_matrix,
+    log_loss,
     precision_recall_fscore_support,
     roc_auc_score,
 )
@@ -64,6 +66,7 @@ def supervised_metrics(
             np.mean([metrics["average_precision"] for metrics in per_class.values()])
         ),
         "multiclass_brier_score": brier,
+        "log_loss": float(log_loss(truth, probabilities, labels=classes)),
         "classes": classes.tolist(),
         "per_class": per_class,
         "confusion_matrix": confusion_matrix(truth, predictions, labels=classes).tolist(),
@@ -79,8 +82,7 @@ def anomaly_metrics(
     binary = (truth != "baseline").astype(np.int8)
     if len(np.unique(binary)) != 2:
         raise MLExperimentError("anomaly evaluation requires baseline and injected scenarios")
-    injected_count = int(binary.sum())
-    top_indices = np.argsort(-anomaly_scores, kind="stable")[:injected_count]
+    ranking = np.argsort(-anomaly_scores, kind="stable")
     scenario_distributions = {
         scenario: _score_summary(anomaly_scores[truth == scenario])
         for scenario in SCENARIO_NAMES
@@ -93,26 +95,58 @@ def anomaly_metrics(
             continue
         mask = baseline_mask | (truth == scenario)
         scenario_binary = (truth[mask] == scenario).astype(np.int8)
-        per_scenario[scenario] = {
+        scenario_metrics: dict[str, Any] = {
             "roc_auc_vs_baseline": float(roc_auc_score(scenario_binary, anomaly_scores[mask])),
             "average_precision_vs_baseline": float(
                 average_precision_score(scenario_binary, anomaly_scores[mask])
             ),
-            "top_k_capture": float(
-                np.sum(truth[top_indices] == scenario) / np.sum(truth == scenario)
-            ),
             "support": int(np.sum(truth == scenario)),
+        }
+        for percentage in (1, 5, 10):
+            count = max(1, math.ceil(len(truth) * percentage / 100))
+            scenario_metrics[f"top_{percentage}_percent_capture"] = float(
+                np.sum(truth[ranking[:count]] == scenario) / np.sum(truth == scenario)
+            )
+        per_scenario[scenario] = scenario_metrics
+    top_budget: dict[str, Any] = {}
+    for percentage in (1, 5, 10):
+        count = max(1, math.ceil(len(truth) * percentage / 100))
+        selected = ranking[:count]
+        top_budget[f"top_{percentage}_percent"] = {
+            "row_count": count,
+            "injected_capture": float(binary[selected].sum() / binary.sum()),
+            "precision": float(binary[selected].mean()),
         }
     return {
         "score_direction": "higher_is_more_anomalous",
         "comparison": "baseline_vs_injected_scenario",
         "roc_auc": float(roc_auc_score(binary, anomaly_scores)),
         "average_precision": float(average_precision_score(binary, anomaly_scores)),
-        "top_k": injected_count,
-        "top_k_capture": float(binary[top_indices].mean()),
+        "top_budget": top_budget,
         "score_distributions": scenario_distributions,
         "per_scenario": per_scenario,
     }
+
+
+def recall_by_intensity(
+    truth: np.ndarray[Any, np.dtype[np.str_]],
+    predictions: np.ndarray[Any, np.dtype[np.str_]],
+    intensities: np.ndarray[Any, np.dtype[np.str_]],
+) -> dict[str, dict[str, float | int]]:
+    if not (len(truth) == len(predictions) == len(intensities)):
+        raise MLExperimentError("intensity evaluation arrays differ in length")
+    result: dict[str, dict[str, float | int]] = {}
+    for scenario in SCENARIO_NAMES:
+        if scenario == "baseline":
+            continue
+        for intensity in ("weak", "medium", "strong"):
+            mask = (truth == scenario) & (intensities == intensity)
+            if np.any(mask):
+                result.setdefault(scenario, {})[intensity] = float(
+                    np.mean(predictions[mask] == truth[mask])
+                )
+                result[scenario][f"{intensity}_support"] = int(np.sum(mask))
+    return result
 
 
 def unsupervised_score_summary(

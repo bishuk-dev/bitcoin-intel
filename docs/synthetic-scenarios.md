@@ -59,3 +59,33 @@ sidecar parameter or reader.
 An end-to-end leakage regression test ingests a scenario bundle, prepares the factual graph import,
 builds features, and verifies that scenario/truth field names are absent from every canonical,
 graph-import, and feature Parquet schema.
+
+## Phase 7 challenge-v1 profile
+
+The historical generator above remains unchanged for regression and Phase 5 reproducibility.
+Select the harder, separately versioned profile explicitly:
+
+```bash
+uv run python scripts/generate_scenarios.py \
+  --profile challenge-v1 --transactions 20000 --seed 42 --group-size 16 \
+  --output ../../benchmarks/generated/challenge-v1-20000
+```
+
+`challenge-v1` replaces fixed extremes with overlapping distributions. Baseline transactions can
+naturally have high values, moderate fan-out, bursts, endpoint reuse, multiple inputs/outputs,
+address reuse, and hub/chain behaviour. Injected scenarios shift those same distributions at
+deterministic weak, medium, or strong intensity; they do not receive arbitrary label noise. About
+22% of rows also receive an evaluation-only secondary behavioural tag while retaining exactly one
+primary multiclass label.
+
+Transaction order is a deterministic permutation rather than class order. TXIDs and group tokens
+are hashes without scenario text. All addresses and exact IPs remain group-local. Ports and script
+types come from common pools, timestamps are independent of class, and eight enrichment prefixes
+are shared by every class. Countries/ASNs therefore describe overlapping endpoint populations,
+while match, diversity, and reuse behaviour can differ.
+
+The `1.2.0` truth sidecar adds `scenario_intensity`, `secondary_tags`, and profile identity. Those
+fields remain evaluation-only. An audit rejects truth keys in source, scenario names in IDs,
+cross-group identifiers, single-class port/script/IP-prefix values, and implausible class ordering.
+The measured 20k profile has no such fingerprint; its best group-safe one-feature decision stump
+reaches 0.2659 Macro F1.

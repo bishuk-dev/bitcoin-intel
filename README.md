@@ -5,7 +5,7 @@ The intended product is an offline Linux-based investigative intelligence platfo
 
 ## Current Status
 
-**Phase 6 — Offline GeoIP/ASN Intelligence and Feature Schema v2**
+**Phase 7 — Advanced Classical ML, Harder Evaluation, and Model Selection**
 
 The repository contains the Phase 0 FastAPI health service and React developer screen, Phase 1
 canonical ingestion, local DuckDB analytics, a derived Neo4j Community factual graph, a versioned
@@ -38,7 +38,15 @@ endpoint/correlation measurements. See [`docs/ip-enrichment.md`](docs/ip-enrichm
 [`docs/features.md`](docs/features.md), and [`THIRD_PARTY_DATA.md`](THIRD_PARTY_DATA.md). Runtime
 enrichment performs no downloads or remote API calls.
 
-Entity resolution, production model selection, model fusion, risk scoring, alerts, graph HTTP
+Phase 7 adds the overlapping `challenge-v1` profile, HistGradientBoosting, CPU-only XGBoost,
+LightGBM, a PCA reconstruction-error anomaly baseline, bounded validation-only tuning, probability
+calibration diagnostics, multi-seed stability, feature/enrichment ablations, and a machine-readable
+selection artifact. Logistic Regression is the preferred supervised candidate, Random Forest is
+the fallback, and Isolation Forest is the preferred anomaly model under this synthetic regime.
+See [`docs/ml-model-selection.md`](docs/ml-model-selection.md) and the
+[`Phase 7 benchmark`](docs/benchmarks/phase-7.md).
+
+Entity resolution, production risk integration, model fusion, risk scoring, alerts, graph HTTP
 endpoints, and graph visualization are **not implemented yet**.
 
 The detailed product constraints remain in `project-context.md` and `instructions.md`.
@@ -232,6 +240,17 @@ uv run python scripts/benchmark_phase6.py \
   --work-directory ../../benchmarks/work/phase6-local
 ```
 
+The Phase 7 benchmark performs challenge-only screening, bounded tuning, ablation, stability, and
+model selection while retaining trusted local artifacts for offline verification:
+
+```bash
+uv run python scripts/benchmark_phase7.py \
+  --transactions 20000 \
+  --output ../../benchmarks/results/phase-7-local.json \
+  --selection-output ../../benchmarks/results/model-selection-local.json \
+  --work-directory ../../benchmarks/work/phase7-local --keep-data
+```
+
 Frontend:
 
 ```bash
@@ -280,6 +299,7 @@ docs/features.md       Phase 4 feature schemas, lineage, time, null, and correla
 docs/synthetic-scenarios.md  Connected evaluation-data generator and truth separation
 docs/ml-baselines.md   Phase 5 model, leakage, split, metric, and artifact semantics
 docs/ip-enrichment.md  Phase 6 offline resource, schema, provenance, and limitation contract
+docs/ml-model-selection.md  Phase 7 challenge evaluation and classical-model selection
 docs/deployment/       Offline Neo4j image and operational workflow
 docs/benchmarks/       Reproducible benchmark reports
 docs/architecture/     Implemented architecture decisions

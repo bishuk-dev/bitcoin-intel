@@ -77,6 +77,8 @@ module = [
     "netaddr",
     "pyarrow",
     "pyarrow.*",
+    "scipy",
+    "scipy.*",
     "sklearn",
     "sklearn.*",
 ]

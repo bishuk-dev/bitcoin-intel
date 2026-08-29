@@ -1,0 +1,74 @@
+{
+  "alternatives_considered": [
+    {
+      "experiment_id": "81e4d126a1ad90cae00893a936e1e5ee68fd5662f8fdac9246a2c48314cb7f4b",
+      "model": "logistic-regression"
+    },
+    {
+      "experiment_id": "92e487fbf3a1f9545a241473913cb8f000df1bc46ce1e350a2ff0c03a3e221a0",
+      "model": "random-forest"
+    },
+    {
+      "experiment_id": "903dc659b2e8957ff700a13809956d05510e6c5041dfb1c02adda588a27aa3ea",
+      "model": "hist-gradient-boosting"
+    },
+    {
+      "experiment_id": "9fc9abe5bc21d472941d2b4455a59d285f61575539d3cc551ef21baea1891994",
+      "model": "xgboost"
+    },
+    {
+      "experiment_id": "bf34a4a3f81d184a150c7a22a794e6e6988ad37427ecb64d893f83fb2b79e069",
+      "model": "lightgbm"
+    }
+  ],
+  "challenge_profile": "challenge-v1",
+  "fallback_supervised_experiment_id": "92e487fbf3a1f9545a241473913cb8f000df1bc46ce1e350a2ff0c03a3e221a0",
+  "feature_schema_version": "2.0.0",
+  "preferred_anomaly_experiment_id": "f3ad0e35ccc7d6cfd9141fe3f0ab8ed07bed18014b5e4d4d6e1c965166959d20",
+  "preferred_supervised_experiment_id": "81e4d126a1ad90cae00893a936e1e5ee68fd5662f8fdac9246a2c48314cb7f4b",
+  "selection_metrics": {
+    "decision_matrix": [
+      {
+        "artifact_bytes": 3664,
+        "criterion": "within 0.03 macro-F1 of the best validation result, then weighted across scenario balance, weak recall, calibration, stability, cost, diagnostics, and offline deployment",
+        "eligible_for_selection": true,
+        "experiment_id": "81e4d126a1ad90cae00893a936e1e5ee68fd5662f8fdac9246a2c48314cb7f4b",
+        "explainability_suitability": 1.0,
+        "inference_seconds": 0.09216500000911765,
+        "macro_f1": 0.48307816896550604,
+        "minimum_scenario_recall": 0.22199170124481327,
+        "model": "logistic-regression",
+        "multiclass_brier_score": 0.6335511198714615,
+        "offline_deployment_simplicity": 1.0,
+        "selection_score": 0.5696753578455591,
+        "stability_macro_f1_std": 0.005857250924341745,
+        "training_seconds": 3.4887951999844518,
+        "weak_pattern_recall": 0.41399039176378305
+      },
+      {
+        "artifact_bytes": 18426818,
+        "criterion": "within 0.03 macro-F1 of the best validation result, then weighted across scenario balance, weak recall, calibration, stability, cost, diagnostics, and offline deployment",
+        "eligible_for_selection": true,
+        "experiment_id": "92e487fbf3a1f9545a241473913cb8f000df1bc46ce1e350a2ff0c03a3e221a0",
+        "explainability_suitability": 0.8,
+        "inference_seconds": 1.405966599995736,
+        "macro_f1": 0.4955701061280619,
+        "minimum_scenario_recall": 0.2966804979253112,
+        "model": "random-forest",
+        "multiclass_brier_score": 0.616677099902904,
+        "offline_deployment_simplicity": 1.0,
+        "selection_score": 0.5291040156276123,
+        "stability_macro_f1_std": 0.008226276652127098,
+        "training_seconds": 9.426147299993318,
+        "weak_pattern_recall": 0.4014169029417746
+      }
+    ],
+    "primary": "group-safe validation macro_f1"
+  },
+  "selection_reason": "logistic-regression remained within the predeclared validation Macro-F1 gate and ranked highest across scenario balance, weak-pattern recall, calibration, stability, runtime, artifact size, diagnostic suitability, and offline deployment complexity.",
+  "selection_schema_version": "1.0.0",
+  "semantics": {
+    "anomaly_score_is_risk": false,
+    "model_probability_is_risk": false
+  }
+}

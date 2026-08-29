@@ -14,13 +14,18 @@ import numpy as np
 import pyarrow as pa
 import pyarrow.parquet as pq
 import sklearn
+import xgboost
+from lightgbm import LGBMClassifier
+from lightgbm import __version__ as lightgbm_version
 from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.ensemble import IsolationForest, RandomForestClassifier
+from sklearn.calibration import CalibratedClassifierCV
+from sklearn.ensemble import HistGradientBoostingClassifier, IsolationForest, RandomForestClassifier
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import LocalOutlierFactor
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
+from xgboost import XGBClassifier
 
 from bitcoin_intel.ml.artifacts import (
     artifact_metadata,
@@ -32,8 +37,10 @@ from bitcoin_intel.ml.artifacts import (
     write_json,
 )
 from bitcoin_intel.ml.dataset import LoadedExperimentDataset, load_experiment_dataset
+from bitcoin_intel.ml.estimators import EncodedClassifier, PCAReconstructionDetector
 from bitcoin_intel.ml.evaluation import (
     anomaly_metrics,
+    recall_by_intensity,
     supervised_metrics,
     unsupervised_score_summary,
 )
@@ -78,6 +85,9 @@ def run_experiment(config: ExperimentConfig) -> ExperimentSummary:
             config.feature_path, config.feature_family, config.truth_path
         )
         _, loading_peak_bytes = tracemalloc.get_traced_memory()
+        # Python allocation tracing is useful for feature loading but severely distorts native
+        # tree-library training timings. Process peak RSS below remains the end-to-end measure.
+        tracemalloc.stop()
         if config.experiment_type == "scenario":
             _validate_multiclass_truth(dataset)
         split = make_split(
@@ -168,7 +178,8 @@ def run_experiment(config: ExperimentConfig) -> ExperimentSummary:
             discard_staging_directory(staging)
             raise
     finally:
-        tracemalloc.stop()
+        if tracemalloc.is_tracing():
+            tracemalloc.stop()
 
     primary_name = "roc_auc" if config.experiment_type == "anomaly" else "macro_f1"
     raw_primary_value = metrics["test"].get(primary_name)
@@ -195,7 +206,7 @@ def _build_pipeline(
             "max_samples": "auto",
             "contamination": "auto",
             "random_state": config.seed,
-            "n_jobs": 1,
+            "n_jobs": 4,
         }
         estimator = IsolationForest(**parameters)
         steps: list[tuple[str, Any]] = [
@@ -213,6 +224,16 @@ def _build_pipeline(
             "n_jobs": 1,
         }
         estimator = LocalOutlierFactor(**parameters)
+        steps = [
+            ("imputer", SimpleImputer(strategy="median")),
+            ("scaler", StandardScaler()),
+            ("finite", FiniteMatrixValidator()),
+            ("model", estimator),
+        ]
+    elif config.model == "pca-reconstruction":
+        parameters = {"explained_variance": 0.90, "random_state": config.seed}
+        parameters = _apply_parameter_overrides(config, parameters)
+        estimator = PCAReconstructionDetector(**parameters)
         steps = [
             ("imputer", SimpleImputer(strategy="median")),
             ("scaler", StandardScaler()),
@@ -242,7 +263,7 @@ def _build_pipeline(
             "min_samples_leaf": 2,
             "class_weight": "balanced_subsample",
             "random_state": config.seed,
-            "n_jobs": 1,
+            "n_jobs": 4,
         }
         estimator = RandomForestClassifier(**parameters)
         steps = [
@@ -250,9 +271,99 @@ def _build_pipeline(
             ("finite", FiniteMatrixValidator()),
             ("model", estimator),
         ]
+    elif config.model == "hist-gradient-boosting":
+        parameters = {
+            "learning_rate": 0.08,
+            "max_iter": 250,
+            "max_leaf_nodes": 31,
+            "max_depth": None,
+            "min_samples_leaf": 20,
+            "l2_regularization": 1.0,
+            "random_state": config.seed,
+        }
+        parameters = _apply_parameter_overrides(config, parameters)
+        estimator = HistGradientBoostingClassifier(**parameters)
+        steps = [
+            ("imputer", SimpleImputer(strategy="median")),
+            ("finite", FiniteMatrixValidator()),
+            ("model", _calibrated(config, estimator)),
+        ]
+    elif config.model == "xgboost":
+        parameters = {
+            "objective": "multi:softprob",
+            "eval_metric": "mlogloss",
+            "n_estimators": 300,
+            "learning_rate": 0.06,
+            "max_depth": 6,
+            "min_child_weight": 2.0,
+            "subsample": 0.85,
+            "colsample_bytree": 0.85,
+            "reg_alpha": 0.05,
+            "reg_lambda": 1.0,
+            "random_state": config.seed,
+            "n_jobs": 4,
+            "tree_method": "hist",
+            "device": "cpu",
+        }
+        parameters = _apply_parameter_overrides(config, parameters)
+        estimator = EncodedClassifier(XGBClassifier(**parameters))
+        steps = [
+            ("imputer", SimpleImputer(strategy="median")),
+            ("finite", FiniteMatrixValidator()),
+            ("model", _calibrated(config, estimator)),
+        ]
+    elif config.model == "lightgbm":
+        parameters = {
+            "objective": "multiclass",
+            "n_estimators": 300,
+            "learning_rate": 0.06,
+            "num_leaves": 31,
+            "max_depth": -1,
+            "min_child_samples": 20,
+            "subsample": 0.85,
+            "colsample_bytree": 0.85,
+            "reg_alpha": 0.05,
+            "reg_lambda": 1.0,
+            "random_state": config.seed,
+            "n_jobs": 4,
+            "device_type": "cpu",
+            "verbosity": -1,
+        }
+        parameters = _apply_parameter_overrides(config, parameters)
+        estimator = EncodedClassifier(LGBMClassifier(**parameters))
+        steps = [
+            ("imputer", SimpleImputer(strategy="median")),
+            ("finite", FiniteMatrixValidator()),
+            ("model", _calibrated(config, estimator)),
+        ]
     else:
         raise AssertionError(f"validated model has no pipeline: {config.model}")
+    if config.model in {"logistic-regression", "random-forest"}:
+        parameters = _apply_parameter_overrides(config, parameters)
+        # Reconstruct after applying the finite, explicitly allow-listed search parameters.
+        if config.model == "logistic-regression":
+            steps[-1] = ("model", _calibrated(config, LogisticRegression(**parameters)))
+        else:
+            steps[-1] = ("model", _calibrated(config, RandomForestClassifier(**parameters)))
     return Pipeline(steps), parameters
+
+
+def _apply_parameter_overrides(
+    config: ExperimentConfig, defaults: dict[str, Any]
+) -> dict[str, Any]:
+    overrides = dict(config.parameter_overrides)
+    unsupported = sorted(set(overrides) - set(defaults))
+    if unsupported:
+        raise ValueError(
+            f"unsupported {config.model} parameter override(s): {', '.join(unsupported)}"
+        )
+    return {**defaults, **overrides}
+
+
+def _calibrated(config: ExperimentConfig, estimator: Any) -> Any:
+    if config.calibration == "none":
+        return estimator
+    return CalibratedClassifierCV(estimator=estimator, method=config.calibration, cv=3, n_jobs=1)
 
 
 def _predict(
@@ -267,14 +378,29 @@ def _predict(
     if experiment_type == "scenario":
         predictions = np.asarray(model_pipeline.predict(values), dtype=np.str_)
         probabilities = np.asarray(model_pipeline.predict_proba(values), dtype=np.float64)
-        if np.isnan(probabilities).any() or np.isinf(probabilities).any():
-            raise MLExperimentError("supervised model produced non-finite probabilities")
+        probabilities = _normalize_probabilities(probabilities)
         return predictions, probabilities, None
     native_scores = np.asarray(model_pipeline.score_samples(values), dtype=np.float64)
     anomaly_scores = -native_scores
     if np.isnan(anomaly_scores).any() or np.isinf(anomaly_scores).any():
         raise MLExperimentError("anomaly model produced non-finite scores")
     return None, None, anomaly_scores
+
+
+def _normalize_probabilities(
+    probabilities: np.ndarray[Any, np.dtype[np.float64]],
+) -> np.ndarray[Any, np.dtype[np.float64]]:
+    if (
+        probabilities.ndim != 2
+        or np.isnan(probabilities).any()
+        or np.isinf(probabilities).any()
+        or np.any(probabilities < 0)
+    ):
+        raise MLExperimentError("supervised model produced invalid probabilities")
+    row_sums = probabilities.sum(axis=1, keepdims=True)
+    if np.any(row_sums <= 0):
+        raise MLExperimentError("supervised model produced a zero-sum probability row")
+    return probabilities / row_sums
 
 
 def _evaluate(
@@ -296,6 +422,12 @@ def _evaluate(
             result[split_name] = supervised_metrics(
                 dataset.labels[indices], predictions[indices], probabilities[indices], classes
             )
+            if dataset.intensities is not None:
+                result[split_name]["recall_by_intensity"] = recall_by_intensity(
+                    dataset.labels[indices],
+                    predictions[indices],
+                    dataset.intensities[indices],
+                )
         elif anomaly_scores is not None and dataset.labels is not None:
             result[split_name] = anomaly_metrics(dataset.labels[indices], anomaly_scores[indices])
         elif anomaly_scores is not None:
@@ -327,6 +459,12 @@ def _semantic_configuration(
         "truth_sha256": (
             dataset.truth_metadata["path_sha256"] if dataset.truth_metadata is not None else None
         ),
+        "challenge_profile": (
+            dataset.truth_metadata.get("challenge_profile")
+            if dataset.truth_metadata is not None
+            else None
+        ),
+        "enrichment_dataset_id": dataset.feature_manifest.get("enrichment_dataset_id"),
         "split": {
             "strategy": config.split_strategy,
             "seed": config.seed,
@@ -334,6 +472,11 @@ def _semantic_configuration(
             "counts": split.metadata["counts"],
         },
         "seed": config.seed,
+        "calibration": {
+            "method": config.calibration,
+            "fit_scope": "training_rows_only",
+            "cv": 3 if config.calibration != "none" else None,
+        },
         "model": {
             "name": config.model,
             "class": type(
@@ -375,7 +518,12 @@ def _write_experiment_artifacts(
             "constant_training_columns_excluded": list(constant_columns),
             "identity_columns_excluded": ["txid"],
             "timestamp_columns_excluded": ["first_observed_at", "last_observed_at"],
-            "evaluation_only_columns_excluded": ["scenario_class", "scenario_group_id"],
+            "evaluation_only_columns_excluded": [
+                "scenario_class",
+                "scenario_group_id",
+                "scenario_intensity",
+                "secondary_tags",
+            ],
         },
     )
     pq.write_table(
@@ -400,6 +548,10 @@ def _write_experiment_artifacts(
         }
         if dataset.groups is not None:
             truth_columns["scenario_group_id"] = dataset.groups
+        if dataset.intensities is not None:
+            truth_columns["scenario_intensity"] = dataset.intensities
+        if dataset.secondary_tags is not None:
+            truth_columns["secondary_tags"] = list(dataset.secondary_tags)
         pq.write_table(
             pa.table(truth_columns),
             evaluation / "scenario-truth.parquet",
@@ -452,10 +604,13 @@ def _write_experiment_artifacts(
         "feature_family": config.feature_family,
         "feature_mode": semantic_configuration["feature_mode"],
         "feature_cutoff": semantic_configuration["feature_cutoff"],
+        "challenge_profile": semantic_configuration["challenge_profile"],
+        "enrichment_dataset_id": semantic_configuration["enrichment_dataset_id"],
         "split_strategy": config.split_strategy,
         "split_counts": split.metadata["counts"],
         "seed": config.seed,
         "model": semantic_configuration["model"],
+        "calibration": semantic_configuration["calibration"],
         "library_versions": semantic_configuration["library_versions"],
         "metrics": metrics,
         "runtime": runtime,
@@ -498,6 +653,15 @@ def _write_predictions(
 
 def _model_diagnostics(model_pipeline: Pipeline, columns: tuple[str, ...]) -> dict[str, Any]:
     model = model_pipeline.named_steps["model"]
+    if isinstance(model, CalibratedClassifierCV):
+        return {
+            "kind": "calibrated_classifier",
+            "feature_columns": list(columns),
+            "method": model.method,
+            "limitation": "cross-validated calibration wraps several fitted base estimators",
+        }
+    if isinstance(model, EncodedClassifier):
+        model = model.estimator_
     if hasattr(model, "coef_"):
         return {
             "kind": "logistic_regression_coefficients",
@@ -508,7 +672,7 @@ def _model_diagnostics(model_pipeline: Pipeline, columns: tuple[str, ...]) -> di
         }
     if hasattr(model, "feature_importances_"):
         return {
-            "kind": "random_forest_impurity_importance",
+            "kind": "built_in_feature_importance_diagnostic",
             "feature_importance": dict(
                 zip(
                     columns,
@@ -564,6 +728,8 @@ def _library_versions() -> dict[str, str]:
         "numpy": np.__version__,
         "pyarrow": pa.__version__,
         "scikit_learn": sklearn.__version__,
+        "xgboost": xgboost.__version__,
+        "lightgbm": lightgbm_version,
         "joblib": joblib.__version__,
     }
 

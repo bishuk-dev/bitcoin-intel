@@ -6,7 +6,13 @@ from dataclasses import asdict
 from pathlib import Path
 
 from bitcoin_intel.ml.artifacts import inspect_experiment
-from bitcoin_intel.ml.models import FEATURE_FAMILIES, SPLIT_STRATEGIES, ExperimentConfig
+from bitcoin_intel.ml.models import (
+    CALIBRATION_METHODS,
+    EXPERIMENT_MODELS,
+    FEATURE_FAMILIES,
+    SPLIT_STRATEGIES,
+    ExperimentConfig,
+)
 from bitcoin_intel.ml.training import run_experiment
 
 
@@ -23,7 +29,7 @@ def configure_ml_parser(
     anomaly.add_argument("--truth", type=Path, help="evaluation-only synthetic truth sidecar")
     anomaly.add_argument(
         "--model",
-        choices=("isolation-forest", "local-outlier-factor"),
+        choices=EXPERIMENT_MODELS["anomaly"],
         default="isolation-forest",
     )
 
@@ -34,9 +40,10 @@ def configure_ml_parser(
     scenario.add_argument("--truth", type=Path, required=True)
     scenario.add_argument(
         "--model",
-        choices=("logistic-regression", "random-forest"),
+        choices=EXPERIMENT_MODELS["scenario"],
         default="logistic-regression",
     )
+    scenario.add_argument("--calibration", choices=CALIBRATION_METHODS, default="none")
 
     evaluate = commands.add_parser(
         "evaluate", help="verify and inspect an existing experiment without loading its model"
@@ -59,6 +66,7 @@ def run_ml_command(args: argparse.Namespace) -> int:
                 feature_family=args.feature_family,
                 split_strategy=args.split,
                 seed=args.seed,
+                calibration=getattr(args, "calibration", "none"),
             )
         )
         print(json.dumps(asdict(summary), indent=2, sort_keys=True, default=str))
